@@ -227,7 +227,7 @@ app.get('/health', (req, res) => {
 // ======================================
 // Railway 部署修复：使用环境变量PORT + 绑定0.0.0.0
 // ======================================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;  // Railway 会注入 PORT，不要硬编码8080
 
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 服务器运行在端口 ${PORT}`);
@@ -236,7 +236,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.error('❌ 服务器启动失败:', err.message);
     process.exit(1);
 });
-
 // 优雅关闭
 process.on('SIGTERM', () => {
     console.log('收到 SIGTERM，关闭服务器...');
