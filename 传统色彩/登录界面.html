@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>传统色彩数字工坊 - 登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei",sans-serif;
+        }
+
+        body {
+            background: #f7f3ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fffaf5;
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #d9b798;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 26px;
+            color: #8c5c3b;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .sub-title {
+            text-align: center;
+            color: #a87f61;
+            font-size: 14px;
+            margin-bottom: 35px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+            .input-group label {
+                display: block;
+                color: #7a513c;
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+
+            .input-group input {
+                width: 100%;
+                height: 44px;
+                padding: 0 14px;
+                border: 1px solid #d9b798;
+                border-radius: 8px;
+                background: #fff;
+                font-size: 15px;
+                outline: none;
+            }
+
+        .btn {
+            width: 100%;
+            height: 46px;
+            border-radius: 8px;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .btn-login {
+            background: #b17a54;
+            color: #fff;
+        }
+
+        .btn-register {
+            background: transparent;
+            color: #b17a54;
+            border: 1px solid #b17a54;
+            margin-top: 12px;
+        }
+
+        .btn-guest {
+            background: #86987c;
+            color: #fff;
+            margin-top: 12px;
+        }
+
+        /* 注册弹窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+            .modal.show {
+                display: flex;
+            }
+
+        .modal-card {
+            background: #fffaf5;
+            width: 90%;
+            max-width: 380px;
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid #d4b2a2;
+        }
+
+        .modal-title {
+            text-align: center;
+            font-size: 22px;
+            color: #8c5c3b;
+            margin-bottom: 25px;
+        }
+
+        .close-modal {
+            text-align: right;
+            color: #8c5c3b;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="title">传统色彩数字工坊</div>
+        <div class="sub-title">Traditional Color Workshop</div>
+
+        <div class="input-group">
+            <label>账号</label>
+            <input type="text" id="loginAccount" placeholder="请输入账号">
+        </div>
+        <div class="input-group">
+            <label>密码</label>
+            <input type="password" id="loginPwd" placeholder="请输入密码">
+        </div>
+
+        <button class="btn btn-login" onclick="goLogin()">登录</button>
+        <button class="btn btn-register" onclick="showRegister()">注册账号</button>
+        <button class="btn btn-guest" onclick="goGuest()">游客进入</button>
+    </div>
+
+    <!-- 注册弹窗 -->
+    <div class="modal" id="regModal">
+        <div class="modal-card">
+            <div class="close-modal" onclick="hideRegister()">关闭 ×</div>
+            <div class="modal-title">账号注册</div>
+
+            <div class="input-group">
+                <label>账号</label>
+                <input type="text" id="regAccount" placeholder="请输入账号">
+            </div>
+            <div class="input-group">
+                <label>密码</label>
+                <input type="password" id="regPwd" placeholder="请输入密码">
+            </div>
+
+            <button class="btn btn-login" onclick="doRegister()">完成注册</button>
+        </div>
+    </div>
+
+    <script>
+        // 显示注册
+        function showRegister() {
+            document.getElementById("regModal").classList.add("show");
+        }
+        // 隐藏注册
+        function hideRegister() {
+            document.getElementById("regModal").classList.remove("show");
+        }
+
+        // 注册
+        function doRegister() {
+            let account = document.getElementById("regAccount").value.trim();
+            let pwd = document.getElementById("regPwd").value.trim();
+
+            if (!account || !pwd) {
+                alert("请填写账号和密码");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem("users") || "[]");
+            let exists = users.some(u => u.account === account);
+
+            if (exists) {
+                alert("该账号已注册");
+                return;
+            }
+
+            users.push({ account, pwd });
+            localStorage.setItem("users", JSON.stringify(users));
+
+            alert("注册成功！请登录");
+            hideRegister();
+        }
+
+        // 登录 
+        function goLogin() {
+            let account = document.getElementById("loginAccount").value.trim();
+            let pwd = document.getElementById("loginPwd").value.trim();
+
+            if (!account || !pwd) {
+                alert("请输入账号密码");
+                return;
+            }
+
+            // 1. 先判断是不是管理员（固定账号）
+            if (account === "admin" && pwd === "admin123") {
+                let adminUser = {
+                    account: "admin",
+                    pwd: "admin123",
+                    role: "admin" // 标记管理员角色
+                };
+                localStorage.setItem("currentUser", JSON.stringify(adminUser));
+                alert("管理员登录成功！");
+                location.href = "管理员界面.html"; // 跳转到管理页
+                return;
+            }
+
+            // 2. 普通用户登录逻辑（不变）
+            let users = JSON.parse(localStorage.getItem("users") || "[]");
+            let user = users.find(u => u.account === account && u.pwd === pwd);
+            if (!user) {
+                alert("账号或密码错误");
+                return;
+            }
+            user.role = "user"; // 普通用户角色
+            localStorage.setItem("currentUser", JSON.stringify(user));
+            alert("登录成功：" + user.account);
+            location.href = "主界面.html";
+        }
+
+        // 游客
+        function goGuest() {
+            location.href = "游客界面.html";
+        }
+    </script>
+
+</body>
+</html>

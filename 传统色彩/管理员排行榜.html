@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>传统色彩数字工坊 - 热度排行</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 250, 245, 0.93);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .header-btn {
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 1px;
+            background: #b17a54;
+            color: #fff;
+        }
+
+            .header-btn:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 250, 245, 0.93);
+            border-right: 1px solid #d4b2a2;
+            padding: 30px 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+        }
+
+            .nav-item:hover {
+                background: rgba(177, 122, 84, 0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+            .nav-item.active {
+                background: rgba(177, 122, 84, 0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+                font-weight: bold;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .content-card {
+            background: rgba(255, 250, 245, 0.93);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 30px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 10px 25px;
+            border: 1px solid #d4b2a2;
+            background: #fffaf5;
+            color: #7a513c;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .tab.active {
+                background: #b17a54;
+                color: #fff;
+                border-color: #b17a54;
+            }
+
+        .leaderboard-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 15px;
+            border: 1px solid #e2c9b8;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+            .leaderboard-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+        .leaderboard-rank {
+            font-size: 28px;
+            font-weight: bold;
+            color: #b17a54;
+            width: 50px;
+            text-align: center;
+        }
+
+        .rank-1 {
+            color: #FFD700;
+        }
+
+        .rank-2 {
+            color: #C0C0C0;
+        }
+
+        .rank-3 {
+            color: #CD7F32;
+        }
+
+        .leaderboard-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #e2c9b8;
+        }
+
+        .leaderboard-content {
+            flex: 1;
+        }
+
+        .leaderboard-title {
+            font-size: 18px;
+            color: #8c5c3b;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .leaderboard-author {
+            font-size: 14px;
+            color: #7a513c;
+            margin-bottom: 5px;
+        }
+
+        .leaderboard-stats {
+            font-size: 13px;
+            color: #a87f61;
+        }
+
+        .leaderboard-likes {
+            text-align: center;
+            padding: 15px 25px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid #e2c9b8;
+        }
+
+        .likes-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #c45c5c;
+        }
+
+        .likes-label {
+            font-size: 12px;
+            color: #a87f61;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #a87f61;
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: #b17a54;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        /* 详情模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .modal-overlay.show {
+                display: flex;
+            }
+
+        .modal {
+            background: #fffaf5;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #d4b2a2;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #8c5c3b;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .modal-work-img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal-info {
+            margin-bottom: 20px;
+        }
+
+        .modal-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2c9b8;
+        }
+
+        .modal-comments {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .modal-comment-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e2c9b8;
+        }
+
+        .modal-close {
+            padding: 10px 20px;
+            background: #b17a54;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">传统色彩数字工坊 - 热度排行</div>
+        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="nav-item" onclick="goToPage('管理员主界面.html')">首页</div>
+            <div class="nav-item" onclick="goToPage('管理员统计.html')">数据统计</div>
+            <div class="nav-item" onclick="goToPage('管理员评论.html')">评论监管</div>
+            <div class="nav-item" onclick="goToPage('管理员素材.html')">素材管理</div>
+            <div class="nav-item" onclick="goToPage('管理员作品库.html')">用户作品库</div>
+            <div class="nav-item active" onclick="goToPage('管理员排行榜.html')">热度排行</div>
+        </div>
+
+        <div class="content">
+            <div class="content-card">
+                <div class="content-title">作品点赞热度排行榜</div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('likes', this)">按点赞</div>
+                    <div class="tab" onclick="switchTab('views', this)">按浏览</div>
+                    <div class="tab" onclick="switchTab('new', this)">最新发布</div>
+                </div>
+
+                <button class="refresh-btn" onclick="loadLeaderboard()">🔄 刷新排行</button>
+
+                <div class="leaderboard-list" id="leaderboardList">
+                    <div class="empty-state">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-title" id="modalTitle">作品详情</div>
+            <img src="" class="modal-work-img" id="modalImg">
+            <div class="modal-info" id="modalInfo"></div>
+            <div class="modal-comments" id="modalComments"></div>
+            <button class="modal-close" onclick="closeModal()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'likes';
+        let allWorks = [];
+
+        function goToPage(page) {
+            window.location.href = page;
+        }
+
+        function switchTab(type, element) {
+            currentTab = type;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            loadLeaderboard();
+        }
+
+        function loadLeaderboard() {
+            allWorks = [];
+
+            // 收集所有作品
+            for (let key in localStorage) {
+                if (key.startsWith("myWorks_")) {
+                    const author = key.replace("myWorks_", "");
+                    const userDetails = JSON.parse(localStorage.getItem("userDetails_" + author) || "{}");
+                    const works = JSON.parse(localStorage.getItem(key) || "[]");
+
+                    works.forEach((work, idx) => {
+                        allWorks.push({
+                            id: author + "_" + idx,
+                            title: work.title,
+                            img: work.img,
+                            author: author,
+                            authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${author.length}`,
+                            likes: work.likes || 0,
+                            views: work.views || 0,
+                            time: work.time || new Date().toISOString(),
+                            comments: work.comments || []
+                        });
+                    });
+                }
+            }
+
+            // 排序
+            switch (currentTab) {
+                case 'likes':
+                    allWorks.sort((a, b) => b.likes - a.likes);
+                    break;
+                case 'views':
+                    allWorks.sort((a, b) => b.views - a.views);
+                    break;
+                case 'new':
+                    allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
+                    break;
+            }
+
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+
+            if (allWorks.length === 0) {
+                list.innerHTML = '<div class="empty-state">暂无作品数据</div>';
+                return;
+            }
+
+            list.innerHTML = allWorks.map((work, index) => {
+                const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : (index + 1);
+
+                return `
+              <div class="leaderboard-item" onclick="showDetail('${work.id}')">
+                <div class="leaderboard-rank ${rankClass}">${medal}</div>
+                <img src="${work.img}" class="leaderboard-img" onerror="this.src='https://picsum.photos/200/200?random=1'">
+                <div class="leaderboard-content">
+                  <div class="leaderboard-title">${work.title}</div>
+                  <div class="leaderboard-author">作者：${work.author}</div>
+                  <div class="leaderboard-stats">👁 ${work.views} 次浏览 · 💬 ${work.comments.length} 条评论</div>
+                </div>
+                <div class="leaderboard-likes">
+                  <div class="likes-number">❤️ ${work.likes}</div>
+                  <div class="likes-label">点赞数</div>
+                </div>
+              </div>
+            `;
+            }).join('');
+        }
+
+        function showDetail(workId) {
+            const work = allWorks.find(w => w.id === workId);
+            if (!work) return;
+
+            document.getElementById('modalTitle').innerText = work.title;
+            document.getElementById('modalImg').src = work.img;
+
+            document.getElementById('modalInfo').innerHTML = `
+            <div class="modal-info-item">
+              <span>作者</span>
+              <span>${work.author}</span>
+            </div>
+            <div class="modal-info-item">
+              <span>点赞数</span>
+              <span>${work.likes}</span>
+            </div>
+            <div class="modal-info-item">
+              <span>浏览量</span>
+              <span>${work.views}</span>
+            </div>
+            <div class="modal-info-item">
+              <span>发布时间</span>
+              <span>${new Date(work.time).toLocaleString()}</span>
+            </div>
+          `;
+
+            const commentsHtml = work.comments.length > 0
+                ? work.comments.map(c => `
+                <div class="modal-comment-item">
+                  <strong>${c.author}:</strong> ${c.text}
+                  <div style="font-size:12px;color:#a87f61;margin-top:5px;">${new Date(c.time).toLocaleString()}</div>
+                </div>
+              `).join('')
+                : '<div style="color:#a87f61;text-align:center;">暂无评论</div>';
+
+            document.getElementById('modalComments').innerHTML = `
+            <h4 style="color:#8c5c3b;margin-bottom:10px;">评论 (${work.comments.length})</h4>
+            ${commentsHtml}
+          `;
+
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.id === 'detailModal') {
+                document.getElementById('detailModal').classList.remove('show');
+            }
+        }
+
+        window.onload = function () {
+            loadLeaderboard();
+            setInterval(loadLeaderboard, 30000);
+        };
+    </script>
+    <script src="ai-chat.js"></script>
+</body>
+</html>

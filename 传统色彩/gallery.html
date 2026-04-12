@@ -1,0 +1,810 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>作品库 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("1.jpg") no-repeat center center fixed;
+            background-size: cover;
+            background-color: #f8f3e9;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 250, 240, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #d4b2a2;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8c5c3b;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+            .nav-links a {
+                color: #8c5c3b;
+                text-decoration: none;
+                font-size: 16px;
+                transition: all 0.3s;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+
+                .nav-links a:hover, .nav-links a.active {
+                    background: #f0e6d6;
+                    color: #b17a54;
+                }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+            .page-title h1 {
+                font-size: 36px;
+                color: #8c5c3b;
+                margin-bottom: 10px;
+            }
+
+            .page-title p {
+                font-size: 16px;
+                color: #a87f61;
+            }
+
+        .filter-bar {
+            background: rgba(255, 250, 240, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #d4b2a2;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid #e6d5c3;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 1px solid #d4b2a2;
+            background: #fff;
+            color: #7a513c;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .filter-btn.active {
+                background: #b17a54;
+                color: #fff;
+                border-color: #b17a54;
+            }
+
+            .filter-btn:hover:not(.active) {
+                background: #f0e6d6;
+            }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .work-card {
+            background: rgba(255, 250, 240, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #d4b2a2;
+            transition: 0.3s;
+        }
+
+            .work-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            }
+
+        .work-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            display: block;
+        }
+
+        .work-content {
+            padding: 15px;
+        }
+
+        .work-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .work-title {
+            font-size: 16px;
+            color: #8c5c3b;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+            .work-title:hover {
+                color: #b17a54;
+            }
+
+        .work-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .author-name {
+            font-size: 13px;
+            color: #a87f61;
+        }
+
+        .work-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #a87f61;
+            margin-bottom: 12px;
+        }
+
+        .work-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e6d5c3;
+            background: #fff;
+            color: #7a513c;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+            .action-btn:hover {
+                background: #f0e6d6;
+            }
+
+            .action-btn.liked {
+                background: #c95a5a;
+                color: #fff;
+                border-color: #c95a5a;
+            }
+
+        /* 评论区 */
+        .comments-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e6d5c3;
+            display: none;
+        }
+
+            .comments-section.show {
+                display: block;
+            }
+
+        .comment-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .comment-item {
+            padding: 8px;
+            background: #fffaf5;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .comment-author {
+            color: #8c5c3b;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .comment-text {
+            color: #7a513c;
+        }
+
+        .comment-time {
+            font-size: 11px;
+            color: #a87f61;
+            margin-top: 3px;
+        }
+
+        .comment-input-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e6d5c3;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .comment-submit {
+            padding: 8px 15px;
+            background: #b17a54;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* 私信模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .modal-overlay.show {
+                display: flex;
+            }
+
+        .modal {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid #d4b2a2;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            color: #8c5c3b;
+            margin-bottom: 15px;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e6d5c3;
+            border-radius: 6px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            margin-bottom: 15px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .modal-btn-primary {
+            background: #b17a54;
+            color: #fff;
+        }
+
+        .modal-btn-secondary {
+            background: #e6d5c3;
+            color: #7a513c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a87f61;
+            font-size: 18px;
+            background: rgba(255, 250, 240, 0.95);
+            border-radius: 12px;
+            border: 1px solid #d4b2a2;
+        }
+
+        /* 图片查看器 */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .lightbox.show {
+                display: flex;
+            }
+
+        .lightbox-img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        .lightbox-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">传统色彩数字工坊</div>
+        <nav class="nav-links">
+            <a href="主界面.html">返回主页</a>
+            <a href="login.html">个人中心</a>
+            <a href="gallery.html" class="active">作品库</a>
+            <a href="rank.html">排行榜</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>🖼️ 作品库</h1>
+            <p>发现所有用户的精彩染色作品</p>
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索作品或作者..." oninput="filterWorks()">
+            <button class="filter-btn active" onclick="setFilter('all')">全部</button>
+            <button class="filter-btn" onclick="setFilter('hot')">最热</button>
+            <button class="filter-btn" onclick="setFilter('new')">最新</button>
+            <button class="filter-btn" onclick="setFilter('following')" id="followingBtn" style="display:none;">关注</button>
+        </div>
+
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="empty-state">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 私信模态框 -->
+    <div class="modal-overlay" id="messageModal">
+        <div class="modal">
+            <div class="modal-title">发送私信给 <span id="messageTarget"></span></div>
+            <textarea class="modal-textarea" id="messageContent" placeholder="写下你想说的话..."></textarea>
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-secondary" onclick="closeMessageModal()">取消</button>
+                <button class="modal-btn modal-btn-primary" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片查看器 -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img src="" class="lightbox-img" id="lightboxImg">
+        <div class="lightbox-info" id="lightboxInfo"></div>
+    </div>
+
+    <script>let allWorks = [];
+    let currentFilter = 'all';
+    let currentUser = null;
+    let messageTarget = null;
+
+    window.onload = function() {
+      loadCurrentUser();
+      loadAllWorks();
+
+      // 检查是否有用户筛选参数
+      const urlParams = new URLSearchParams(window.location.search);
+      const userFilter = urlParams.get('user');
+      if (userFilter) {
+        document.getElementById('searchInput').value = userFilter;
+        filterWorks();
+      }
+    };
+
+    function loadCurrentUser() {
+      const userData = localStorage.getItem("currentUser");
+      if (userData) {
+        currentUser = JSON.parse(userData);
+        document.getElementById('followingBtn').style.display = 'inline-block';
+      }
+    }
+
+    function loadAllWorks() {
+      allWorks = [];
+
+      // 从 localStorage 读取所有作品 [^44^][^56^]
+      for (let key in localStorage) {
+        if (key.startsWith("myWorks_")) {
+          const author = key.replace("myWorks_", "");
+          const userDetails = JSON.parse(localStorage.getItem("userDetails_" + author) || "{}");
+          const works = JSON.parse(localStorage.getItem(key) || "[]");
+
+          works.forEach((work, idx) => {
+            allWorks.push({
+              id: author + "_" + idx,
+              title: work.title,
+              img: work.img,
+              author: author,
+              authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${author.length}`,
+              views: work.views || 0,
+              likes: work.likes || 0,
+              time: work.time || new Date().toISOString(),
+              comments: work.comments || []
+            });
+          });
+        }
+      }
+
+      // 默认按时间倒序
+      allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
+      renderGallery();
+    }
+
+    function setFilter(type) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      switch(type) {
+        case 'all':
+          allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
+          break;
+        case 'hot':
+          allWorks.sort((a, b) => (b.likes * 2 + b.views) - (a.likes * 2 + a.views));
+          break;
+        case 'new':
+          allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
+          break;
+        case 'following':
+          // 这里可以实现关注功能
+          break;
+      }
+      renderGallery();
+    }
+
+    function filterWorks() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allWorks.filter(work =>
+        work.title.toLowerCase().includes(keyword) ||
+        work.author.toLowerCase().includes(keyword)
+      );
+      renderGallery(filtered);
+    }
+
+    function renderGallery(works = allWorks) {
+      const grid = document.getElementById('galleryGrid');
+
+      if (works.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div style="font-size:48px; margin-bottom:15px;">🎨</div>
+            暂无作品<br>
+            <a href="dye-workshop.html" style="color:#b17a54; text-decoration:none; margin-top:10px; display:inline-block;">去创作 →</a>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = works.map(work => {
+        const isLiked = currentUser && checkIfLiked(work.id);
+        const hasComments = work.comments && work.comments.length > 0;
+
+        return `
+          <div class="work-card" data-work-id="${work.id}">
+            <img src="${work.img}" class="work-image" onclick="openLightbox('${work.id}')" loading="lazy">
+            <div class="work-content">
+              <div class="work-header">
+                <div class="work-title" onclick="openLightbox('${work.id}')">${work.title}</div>
+              </div>
+              <div class="work-author" onclick="viewAuthor('${work.author}')">
+                <img src="${work.authorAvatar}" class="author-avatar">
+                <span class="author-name">${work.author}</span>
+              </div>
+              <div class="work-stats">
+                <span>👁 ${work.views}</span>
+                <span>👍 ${work.likes}</span>
+                <span>💬 ${work.comments ? work.comments.length : 0}</span>
+              </div>
+              <div class="work-actions">
+                <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${work.id}')">
+                  ${isLiked ? '❤️ 已赞' : '🤍 点赞'}
+                </button>
+                <button class="action-btn" onclick="toggleComments('${work.id}')">
+                  💬 评论
+                </button>
+                ${currentUser && currentUser.account !== work.author ? `
+                  <button class="action-btn" onclick="openMessageModal('${work.author}')">
+                    ✉️ 私信
+                  </button>
+                ` : ''}
+              </div>
+              <div class="comments-section" id="comments-${work.id}">
+                <div class="comment-list" id="commentList-${work.id}">
+                  ${hasComments ? work.comments.map(c => `
+                    <div class="comment-item">
+                      <span class="comment-author">${c.author}:</span>
+                      <span class="comment-text">${c.text}</span>
+                      <div class="comment-time">${new Date(c.time).toLocaleString()}</div>
+                    </div>
+                  `).join('') : '<div style="color:#a87f61; font-size:12px;">暂无评论</div>'}
+                </div>
+                ${currentUser ? `
+                  <div class="comment-input-box">
+                    <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="写下你的评论...">
+                    <button class="comment-submit" onclick="submitComment('${work.id}')">发送</button>
+                  </div>
+                ` : '<div style="color:#a87f61; font-size:12px; text-align:center;">登录后参与评论</div>'}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function checkIfLiked(workId) {
+      if (!currentUser) return false;
+      const likes = JSON.parse(localStorage.getItem("myLikes_" + currentUser.account) || "[]");
+      return likes.includes(workId);
+    }
+
+    function toggleLike(workId) {
+      if (!currentUser) {
+        alert('请先登录');
+        return;
+      }
+
+      const likesKey = "myLikes_" + currentUser.account;
+      const likes = JSON.parse(localStorage.getItem(likesKey) || "[]");
+      const work = allWorks.find(w => w.id === workId);
+
+      // 找到原作品存储位置
+      const [author, idx] = workId.split('_');
+      const worksKey = "myWorks_" + author;
+      const works = JSON.parse(localStorage.getItem(worksKey) || "[]");
+
+      if (likes.includes(workId)) {
+        // 取消点赞
+        const index = likes.indexOf(workId);
+        likes.splice(index, 1);
+        work.likes = Math.max(0, (work.likes || 1) - 1);
+      } else {
+        // 点赞
+        likes.push(workId);
+        work.likes = (work.likes || 0) + 1;
+
+        // 记录点赞通知
+        const allLikes = JSON.parse(localStorage.getItem("allLikes") || "[]");
+        allLikes.push({
+          fromUser: currentUser.account,
+          toUser: author,
+          workTitle: work.title,
+          time: new Date().toISOString()
+        });
+        localStorage.setItem("allLikes", JSON.stringify(allLikes));
+      }
+
+      localStorage.setItem(likesKey, JSON.stringify(likes));
+
+      // 更新作品数据
+      if (works[idx]) {
+        works[idx].likes = work.likes;
+        localStorage.setItem(worksKey, JSON.stringify(works));
+      }
+
+      renderGallery();
+    }
+
+    function toggleComments(workId) {
+      const section = document.getElementById(`comments-${workId}`);
+      section.classList.toggle('show');
+    }
+
+    function submitComment(workId) {
+      const input = document.getElementById(`commentInput-${workId}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const work = allWorks.find(w => w.id === workId);
+      const [author, idx] = workId.split('_');
+      const worksKey = "myWorks_" + author;
+      const works = JSON.parse(localStorage.getItem(worksKey) || "[]");
+
+      if (!works[idx].comments) works[idx].comments = [];
+
+      works[idx].comments.push({
+        author: currentUser.account,
+        text: text,
+        time: new Date().toISOString()
+      });
+
+      localStorage.setItem(worksKey, JSON.stringify(works));
+
+      // 同时保存到全局评论记录
+      const allComments = JSON.parse(localStorage.getItem("allComments") || "[]");
+      allComments.push({
+        fromUser: currentUser.account,
+        toUser: author,
+        workTitle: work.title,
+        content: text,
+        time: new Date().toISOString()
+      });
+      localStorage.setItem("allComments", JSON.stringify(allComments));
+
+      // 发送私信通知
+      const allMessages = JSON.parse(localStorage.getItem("allMessages") || "[]");
+      allMessages.push({
+        from: currentUser.account,
+        to: author,
+        content: `评论了你的作品《${work.title}》: ${text}`,
+        time: new Date().toISOString(),
+        read: false
+      });
+      localStorage.setItem("allMessages", JSON.stringify(allMessages));
+
+      input.value = '';
+      loadAllWorks(); // 刷新数据
+      alert('评论已发送！');
+    }
+
+    function openMessageModal(targetUser) {
+      if (!currentUser) {
+        alert('请先登录');
+        return;
+      }
+      messageTarget = targetUser;
+      document.getElementById('messageTarget').innerText = targetUser;
+      document.getElementById('messageModal').classList.add('show');
+    }
+
+    function closeMessageModal() {
+      document.getElementById('messageModal').classList.remove('show');
+      messageTarget = null;
+    }
+
+    function sendMessage() {
+      const content = document.getElementById('messageContent').value.trim();
+      if (!content || !messageTarget) return;
+
+      const allMessages = JSON.parse(localStorage.getItem("allMessages") || "[]");
+      allMessages.push({
+        from: currentUser.account,
+        to: messageTarget,
+        content: content,
+        time: new Date().toISOString(),
+        read: false
+      });
+      localStorage.setItem("allMessages", JSON.stringify(allMessages));
+
+      document.getElementById('messageContent').value = '';
+      closeMessageModal();
+      alert('私信已发送！');
+    }
+
+    function openLightbox(workId) {
+      const work = allWorks.find(w => w.id === workId);
+      if (!work) return;
+
+      // 增加浏览量
+      const [author, idx] = workId.split('_');
+      const worksKey = "myWorks_" + author;
+      const works = JSON.parse(localStorage.getItem(worksKey) || "[]");
+      if (works[idx]) {
+        works[idx].views = (works[idx].views || 0) + 1;
+        work.views = works[idx].views;
+        localStorage.setItem(worksKey, JSON.stringify(works));
+      }
+
+      document.getElementById('lightboxImg').src = work.img;
+      document.getElementById('lightboxInfo').innerHTML = `
+        <h3>${work.title}</h3>
+        <p>作者: ${work.author} | 👁 ${work.views} | 👍 ${work.likes}</p>
+      `;
+      document.getElementById('lightbox').classList.add('show');
+
+      renderGallery(); // 更新浏览数显示
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('show');
+    }
+
+    function viewAuthor(author) {
+      window.location.href = `gallery.html?user=${encodeURIComponent(author)}`;
+    }
+
+    // 点击模态框外部关闭
+    document.getElementById('messageModal').onclick = function(e) {
+      if (e.target === this) closeMessageModal();
+    };
+
+    // ESC 关闭
+    document.onkeydown = function(e) {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        closeMessageModal();
+      }
+    };</script>
+    <script src="ai-chat.js"></script>
+</body>
+</html>

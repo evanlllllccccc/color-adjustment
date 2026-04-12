@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>传统色彩数字工坊 - 管理员主界面</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 250, 245, 0.93);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .header-btn {
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 1px;
+            background: #b17a54;
+            color: #fff;
+        }
+
+            .header-btn:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 250, 245, 0.93);
+            border-right: 1px solid #d4b2a2;
+            padding: 30px 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+        }
+
+            .nav-item:hover {
+                background: rgba(177, 122, 84, 0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+            .nav-item.active {
+                background: rgba(177, 122, 84, 0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+                font-weight: bold;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .content-card {
+            background: rgba(255, 250, 245, 0.93);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            margin-bottom: 20px;
+        }
+
+        .content-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 30px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .welcome-message {
+            font-size: 18px;
+            color: #7a513c;
+            line-height: 1.6;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #e2c9b8;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+        .feature-icon {
+            font-size: 48px;
+            color: #b17a54;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            color: #8c5c3b;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #7a513c;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">传统色彩数字工坊 - 管理员中心</div>
+        <button class="header-btn" onclick="window.location.href='登录界面.html'">返回登录界面</button>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="goToPage('管理员主界面.html')">首页</div>
+            <div class="nav-item" onclick="goToPage('管理员统计.html')">数据统计</div>
+            <div class="nav-item" onclick="goToPage('管理员评论.html')">评论监管</div>
+            <div class="nav-item" onclick="goToPage('管理员素材.html')">素材管理</div>
+            <div class="nav-item" onclick="goToPage('管理员作品库.html')">用户作品库</div>
+            <div class="nav-item" onclick="goToPage('管理员排行榜.html')">热度排行</div>
+        </div>
+
+        <div class="content">
+            <div class="content-card">
+                <div class="content-title">欢迎使用管理员中心</div>
+                <div class="welcome-message">
+                    您好，管理员！这里是传统色彩数字工坊的管理中心。您可以通过左侧菜单栏或下方卡片访问各项管理功能。
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card" onclick="goToPage('管理员统计.html')">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">数据统计</div>
+                        <div class="feature-description">查看今日登录人数、浏览量、染色统计数据</div>
+                    </div>
+                    <div class="feature-card" onclick="goToPage('管理员评论.html')">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-title">评论监管</div>
+                        <div class="feature-description">管理和删除用户评论</div>
+                    </div>
+                    <div class="feature-card" onclick="goToPage('管理员素材.html')">
+                        <div class="feature-icon">🖼️</div>
+                        <div class="feature-title">素材管理</div>
+                        <div class="feature-description">上传和管理染色素材</div>
+                    </div>
+                    <div class="feature-card" onclick="goToPage('gallery.html')">
+                        <div class="feature-icon">🎨</div>
+                        <div class="feature-title">用户作品库</div>
+                        <div class="feature-description">查看所有用户的染色作品</div>
+                    </div>
+                    <div class="feature-card" onclick="goToPage('管理员排行榜.html')">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-title">热度排行</div>
+                        <div class="feature-description">查看用户点赞热度排行榜</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goToPage(page) {
+            window.location.href = page;
+        }
+    </script>
+    <script src="ai-chat.js"></script>
+</body>
+</html>
