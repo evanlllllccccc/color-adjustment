@@ -372,6 +372,12 @@
 
     <script>
         (function () {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (user && user.role !== 'guest') {
+                window.location.href = '主界面.html';
+            }
+        })();
+        (function () {
             // 后端 API 基础地址
             const API_BASE = ' ';
 

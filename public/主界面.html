@@ -129,6 +129,14 @@
             color: #7a513c;
         }
 
+        .admin-link {
+            background: #b17a54;
+            color: white !important;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+
         @media (max-width: 768px) {
             .title-section h1 {
                 font-size: 28px;
@@ -159,55 +167,44 @@
                 <h3>🏆 排行榜</h3>
                 <p>实时查看用户排名，根据作品点赞数和浏览量综合排序，发现优秀创作者。</p>
             </a>
-
             <a href="染色界面.html" class="card">
                 <h3>🎨 染色工坊</h3>
                 <p>在线调试色彩参数，模拟植物染、矿物染等传统工艺效果，预览不同材质上的色彩呈现。</p>
             </a>
-
             <a href="gallery.html" class="card">
                 <h3>🖼️ 作品库</h3>
                 <p>浏览所有用户的公开作品，点赞、评论、交流，发现传统色彩的无限可能。</p>
             </a>
-
             <a href="介绍界面.html" class="card">
                 <h3>📖 项目介绍</h3>
                 <p>了解传统色彩数字工坊的项目背景、技术实现和文化传承意义。</p>
             </a>
         </div>
 
-        <div class="login-tip" id="loginTip">
-            加载中...
-        </div>
+        <div class="login-tip" id="loginTip">加载中...</div>
     </div>
 
     <script>
         (function () {
-            // 后端基础地址
-            const API_BASE = ' ';
+            // 获取当前登录用户（直接读取 localStorage）
+            function getCurrentUser() {
+                const userStr = localStorage.getItem('currentUser');
+                return userStr ? JSON.parse(userStr) : null;
+            }
 
-            // 获取存储的 token
-            const authToken = localStorage.getItem('authToken');
-
-            // 登出函数
+            // 退出登录
             window.logout = function () {
-                localStorage.removeItem('authToken');
                 localStorage.removeItem('currentUser');
-                // 可选：调用后端登出接口
-                fetch(`${API_BASE}/api/auth/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                }).catch(() => { }).finally(() => {
-                    window.location.href = 'login.html';
-                });
+                window.location.href = 'index.html';
             };
 
             // 初始化界面
-            async function initMainPage() {
+            function initMainPage() {
                 const loginTip = document.getElementById('loginTip');
                 const userNav = document.getElementById('userNav');
+                const user = getCurrentUser();
 
-                if (!authToken) {
+                if (!user) {
                     // 游客模式
                     loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
                     userNav.innerHTML = `
@@ -217,49 +214,25 @@
                     return;
                 }
 
-                // 有 token，尝试获取用户信息
-                try {
-                    const response = await fetch(`${API_BASE}/api/users/me`, {
-                        headers: { 'Authorization': `Bearer ${authToken}` }
-                    });
+                // 已登录
+                const displayName = user.username || user.account || '用户';
+                loginTip.innerText = `👋 欢迎回来，${displayName}！`;
 
-                    if (!response.ok) {
-                        // token 无效或过期
-                        throw new Error('Token 无效');
-                    }
-
-                    const data = await response.json();
-                    const user = data.user || data;
-
-                    // 更新提示和导航
-                    loginTip.innerText = `👋 欢迎回来，${user.account || user.username}！`;
-                    userNav.innerHTML = `
-                            <a href="介绍界面.html">项目介绍</a>
-                            <a href="login.html">个人中心</a>
-                            <a href="#" onclick="logout()">退出登录</a>
-                        `;
-
-                    // 可选：将用户信息暂存到 localStorage 供其他页面快速读取（但始终以后端为准）
-                    localStorage.setItem('currentUser', JSON.stringify(user));
-
-                } catch (error) {
-                    console.warn('获取用户信息失败，视为游客模式', error);
-                    // 清除无效 token
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('currentUser');
-                    loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
-                    userNav.innerHTML = `
-                            <a href="介绍界面.html">项目介绍</a>
-                            <a href="index.html">登录/注册</a>
-                        `;
+                // 构建导航栏
+                let navHtml = `
+                        <a href="介绍界面.html">项目介绍</a>
+                        <a href="login.html">个人中心</a>
+                    `;
+                // 如果是管理员，显示管理员后台入口
+                if (user.role === 'admin') {
+                    navHtml += `<a href="管理员界面.html" class="admin-link">🔐 管理员后台</a>`;
                 }
+                navHtml += `<a href="#" onclick="logout()">退出登录</a>`;
+                userNav.innerHTML = navHtml;
             }
 
-            // 页面加载时执行
             window.onload = initMainPage;
         })();
     </script>
-    <!-- 如果不需要 AI 聊天，可以删除下面的引用，此处保留但不会影响主界面功能 -->
-    <!-- <script src="ai-chat.js"></script> -->
 </body>
 </html>
