@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>热度排行 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei",sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,250,245,0.95);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .header-btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(255,250,245,0.93);
+            padding: 30px 0;
+            border-right: 1px solid #d4b2a2;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .nav-item:hover, .nav-item.active {
+                background: rgba(177,122,84,0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: rgba(255,250,245,0.95);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 25px;
+            border: 1px solid #d4b2a2;
+            background: #fffaf5;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+            .tab.active {
+                background: #b17a54;
+                color: white;
+            }
+
+        .refresh-btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .rank-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .rank-item {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e2c9b8;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .rank-num {
+            font-size: 28px;
+            font-weight: bold;
+            color: #b17a54;
+            width: 50px;
+            text-align: center;
+        }
+
+        .rank-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .rank-info {
+            flex: 1;
+        }
+
+        .rank-title {
+            font-size: 18px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .rank-author {
+            color: #7a513c;
+            margin-top: 5px;
+        }
+
+        .rank-likes {
+            text-align: center;
+        }
+
+        .likes-num {
+            font-size: 28px;
+            font-weight: bold;
+            color: #c95a5a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">热度排行榜</div>
+        <button class="header-btn" onclick="logout()">退出登录</button>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <div class="nav-item" onclick="goTo('管理员主界面.html')">🏠 首页</div>
+            <div class="nav-item" onclick="goTo('管理员统计.html')">📊 数据统计</div>
+            <div class="nav-item" onclick="goTo('管理员评论.html')">💬 评论监管</div>
+            <div class="nav-item" onclick="goTo('管理员素材.html')">🖼️ 素材管理</div>
+            <div class="nav-item" onclick="goTo('管理员作品库.html')">🎨 用户作品库</div>
+            <div class="nav-item active" onclick="goTo('管理员排行榜.html')">🏆 热度排行</div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="title">🏆 作品点赞排行榜</div>
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('likes', this)">按点赞</div>
+                    <div class="tab" onclick="switchTab('views', this)">按浏览量</div>
+                </div>
+                <button class="refresh-btn" onclick="loadRank()">🔄 刷新</button>
+                <div class="rank-list" id="rankList">加载中...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+        function goTo(p) { location.href = p; }
+        function logout() { localStorage.removeItem('currentUser'); location.href = 'index.html'; }
+
+        (function () {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!user || user.role !== 'admin') { alert('无权限'); location.href = 'index.html'; }
+        })();
+
+        let currentTab = 'likes';
+        let works = [];
+
+        window.switchTab = (type, el) => {
+            currentTab = type;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            sortAndRender();
+        };
+
+        async function loadRank() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/works`);
+                const data = await res.json();
+                works = (data.works || data || []).map(w => ({
+                    id: w.id, title: w.title || '未命名', img: w.imageUrl || w.img,
+                    author: w.author?.account || '匿名', likes: w.likes || 0, views: w.views || 0
+                }));
+                sortAndRender();
+            } catch (e) { document.getElementById('rankList').innerHTML = '<div class="empty">加载失败</div>'; }
+        }
+
+        function sortAndRender() {
+            const sorted = [...works].sort((a, b) => currentTab === 'likes' ? b.likes - a.likes : b.views - a.views);
+            const list = document.getElementById('rankList');
+            if (!sorted.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+            list.innerHTML = sorted.slice(0, 50).map((w, i) => `
+                <div class="rank-item">
+                    <div class="rank-num">${i + 1}</div>
+                    <img src="${w.img}" class="rank-img" onerror="this.src='https://picsum.photos/80/80'">
+                    <div class="rank-info">
+                        <div class="rank-title">${escapeHtml(w.title)}</div>
+                        <div class="rank-author">👤 ${escapeHtml(w.author)}</div>
+                        <div style="font-size:13px; color:#a87f61;">👁 ${w.views} 次浏览</div>
+                    </div>
+                    <div class="rank-likes">
+                        <div class="likes-num">❤️ ${w.likes}</div>
+                        <div style="font-size:12px; color:#a87f61;">点赞</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        window.onload = loadRank;
+    </script>
+</body>
+</html>

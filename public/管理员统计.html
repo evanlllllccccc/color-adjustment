@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数据统计 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei",sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,250,245,0.95);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .header-btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(255,250,245,0.93);
+            padding: 30px 0;
+            border-right: 1px solid #d4b2a2;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .nav-item:hover, .nav-item.active {
+                background: rgba(177,122,84,0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .card {
+            background: rgba(255,250,245,0.95);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2c9b8;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #b17a54;
+        }
+
+        .stat-label {
+            color: #7a513c;
+        }
+
+        .refresh {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .update-time {
+            color: #a87f61;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">数据统计</div>
+        <button class="header-btn" onclick="logout()">退出登录</button>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <div class="nav-item" onclick="goTo('管理员主界面.html')">🏠 首页</div>
+            <div class="nav-item active" onclick="goTo('管理员统计.html')">📊 数据统计</div>
+            <div class="nav-item" onclick="goTo('管理员评论.html')">💬 评论监管</div>
+            <div class="nav-item" onclick="goTo('管理员素材.html')">🖼️ 素材管理</div>
+            <div class="nav-item" onclick="goTo('管理员作品库.html')">🎨 用户作品库</div>
+            <div class="nav-item" onclick="goTo('管理员排行榜.html')">🏆 热度排行</div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="title">📊 平台运营数据</div>
+                <button class="refresh" onclick="loadStats()">🔄 刷新数据</button>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="totalUsers">-</div><div class="stat-label">总用户数</div></div>
+                    <div class="stat-card"><div class="stat-value" id="newUsersToday">-</div><div class="stat-label">今日新增用户</div></div>
+                    <div class="stat-card"><div class="stat-value" id="totalWorks">-</div><div class="stat-label">作品总数</div></div>
+                    <div class="stat-card"><div class="stat-value" id="newWorksToday">-</div><div class="stat-label">今日新增作品</div></div>
+                    <div class="stat-card"><div class="stat-value" id="totalLikes">-</div><div class="stat-label">总点赞数</div></div>
+                    <div class="stat-card"><div class="stat-value" id="todayViews">-</div><div class="stat-label">今日浏览量</div></div>
+                    <div class="stat-card"><div class="stat-value" id="totalDyeCount">-</div><div class="stat-label">总染色次数</div></div>
+                    <div class="stat-card"><div class="stat-value" id="todayDyeCount">-</div><div class="stat-label">今日染色次数</div></div>
+                </div>
+                <p class="update-time" id="updateTime"></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+        function goTo(p) { location.href = p; }
+        function logout() { localStorage.removeItem('currentUser'); location.href = 'index.html'; }
+
+        (function () {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!user || user.role !== 'admin') { alert('无权限'); location.href = 'index.html'; }
+        })();
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/stats`);
+                const data = await res.json();
+                document.getElementById('totalUsers').innerText = data.totalUsers ?? 0;
+                document.getElementById('newUsersToday').innerText = data.newUsersToday ?? 0;
+                document.getElementById('totalWorks').innerText = data.totalWorks ?? 0;
+                document.getElementById('newWorksToday').innerText = data.newWorksToday ?? 0;
+                document.getElementById('totalLikes').innerText = data.totalLikes ?? 0;
+                document.getElementById('todayViews').innerText = data.todayViews ?? 0;
+                document.getElementById('totalDyeCount').innerText = data.totalDyeCount ?? 0;
+                document.getElementById('todayDyeCount').innerText = data.todayDyeCount ?? 0;
+                document.getElementById('updateTime').innerText = '最后更新：' + new Date().toLocaleString();
+            } catch (e) { alert('加载失败，请稍后重试'); }
+        }
+        window.onload = loadStats;
+    </script>
+</body>
+</html>

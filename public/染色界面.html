@@ -475,7 +475,7 @@
         <nav class="nav-links">
             <a href="主界面.html">返回主页</a>
             <a href="染色界面.html" class="active">染色工坊</a>
-            <a href="rank.html">作品库</a>
+            <a href="gallery.html">作品库</a>
             <a href="login.html">个人中心</a>
         </nav>
     </header>
@@ -582,7 +582,7 @@
     <script>
         (function () {
             // ---------- 后端配置 ----------
-            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            const API_BASE = ' ';
             const authToken = localStorage.getItem('authToken');
             let currentUser = null;
 
@@ -800,7 +800,7 @@
                 const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
                 if (resp.status === 401) {
                     localStorage.removeItem('authToken');
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     throw new Error('登录过期');
                 }
                 if (!resp.ok) {

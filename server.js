@@ -31,7 +31,8 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '.')));
+// 托管 public 文件夹下的静态文件（前端页面）
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ====================== 数据库初始化（关键修复） ======================
 // 使用 Railway 可写路径

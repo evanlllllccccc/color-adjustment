@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>API 连通测试</title>
+</head>
+<body>
+    <h2>后端登录接口测试</h2>
+    <button onclick="testLogin()">点击测试登录</button>
+    <pre id="output"></pre>
+
+    <script>
+        const API_BASE = ' ';
+
+        async function testLogin() {
+            const output = document.getElementById('output');
+            output.textContent = '测试中...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },   // ✅ 正确格式
+                    body: JSON.stringify({ username: 'admin', password: '123456' })
+                });
+                const data = await response.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                output.textContent = '网络错误: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

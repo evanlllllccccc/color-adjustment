@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员验证 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center fixed;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: rgba(255,250,245,0.95);
+            border-radius: 20px;
+            padding: 50px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #8c5c3b;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #7a513c;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s;
+            border: 1px solid transparent;
+        }
+
+            .btn:hover {
+                background: #9a6843;
+                transform: translateY(-2px);
+            }
+
+        .btn-outline {
+            background: transparent;
+            border-color: #b17a54;
+            color: #b17a54;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔐 管理员验证</h1>
+        <p id="message">正在验证管理员权限...</p>
+        <div>
+            <button class="btn" id="enterBtn" onclick="goToAdmin()">进入管理后台</button>
+            <button class="btn btn-outline" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+
+        function getCurrentUser() {
+            const u = localStorage.getItem('currentUser');
+            return u ? JSON.parse(u) : null;
+        }
+
+        function goToAdmin() {
+            window.location.href = '管理员主界面.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = function () {
+            const user = getCurrentUser();
+            const msg = document.getElementById('message');
+            const btn = document.getElementById('enterBtn');
+            if (!user) {
+                msg.innerText = '❌ 请先登录';
+                btn.disabled = true;
+                setTimeout(() => location.href = 'index.html', 1500);
+                return;
+            }
+            if (user.role !== 'admin') {
+                msg.innerText = '❌ 您不是管理员，无权访问';
+                btn.disabled = true;
+                setTimeout(() => location.href = '主界面.html', 1500);
+                return;
+            }
+            msg.innerText = `✅ 欢迎，管理员 ${user.username || user.account}`;
+        };
+    </script>
+</body>
+</html>

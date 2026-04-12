@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员主界面 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,250,245,0.95);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .header-btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(255,250,245,0.93);
+            padding: 30px 0;
+            border-right: 1px solid #d4b2a2;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .nav-item:hover, .nav-item.active {
+                background: rgba(177,122,84,0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .card {
+            background: rgba(255,250,245,0.95);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .feature {
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #e2c9b8;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .feature:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            }
+
+        .feature-icon {
+            font-size: 40px;
+            color: #b17a54;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: #7a513c;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">管理员中心</div>
+        <button class="header-btn" onclick="logout()">退出登录</button>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="goTo('管理员主界面.html')">🏠 首页</div>
+            <div class="nav-item" onclick="goTo('管理员统计.html')">📊 数据统计</div>
+            <div class="nav-item" onclick="goTo('管理员评论.html')">💬 评论监管</div>
+            <div class="nav-item" onclick="goTo('管理员素材.html')">🖼️ 素材管理</div>
+            <div class="nav-item" onclick="goTo('管理员作品库.html')">🎨 用户作品库</div>
+            <div class="nav-item" onclick="goTo('管理员排行榜.html')">🏆 热度排行</div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="title">欢迎使用管理员中心</div>
+                <p style="color:#7a513c; margin-bottom:30px;">您好，管理员！请选择管理功能。</p>
+                <div class="grid">
+                    <div class="feature" onclick="goTo('管理员统计.html')">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">数据统计</div>
+                        <div class="feature-desc">实时运营数据</div>
+                    </div>
+                    <div class="feature" onclick="goTo('管理员评论.html')">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-title">评论监管</div>
+                        <div class="feature-desc">管理用户评论</div>
+                    </div>
+                    <div class="feature" onclick="goTo('管理员素材.html')">
+                        <div class="feature-icon">🖼️</div>
+                        <div class="feature-title">素材管理</div>
+                        <div class="feature-desc">上传/删除素材</div>
+                    </div>
+                    <div class="feature" onclick="goTo('管理员作品库.html')">
+                        <div class="feature-icon">🎨</div>
+                        <div class="feature-title">作品库</div>
+                        <div class="feature-desc">查看所有作品</div>
+                    </div>
+                    <div class="feature" onclick="goTo('管理员排行榜.html')">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-title">热度排行</div>
+                        <div class="feature-desc">点赞排行</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+
+        function goTo(page) { window.location.href = page; }
+        function logout() { localStorage.removeItem('currentUser'); location.href = 'index.html'; }
+
+        (function () {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!user) { alert('请先登录'); location.href = 'index.html'; return; }
+            if (user.role !== 'admin') { alert('无管理员权限'); location.href = '主界面.html'; return; }
+        })();
+    </script>
+</body>
+</html>

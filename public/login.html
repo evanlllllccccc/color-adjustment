@@ -659,7 +659,7 @@
     <script>
         (function () {
             // ---------- 后端配置 ----------
-            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            const API_BASE = ' ';
             // 全局状态
             let currentUser = null;           // 当前用户信息 { id, username, account, avatar, intro, ... }
             let authToken = localStorage.getItem('authToken');
@@ -671,7 +671,7 @@
                 if (!authToken) {
                     // 未登录则跳转登录页
                     if (!window.location.pathname.includes('login.html')) {
-                        window.location.href = 'login.html';
+                        window.location.href = 'index.html';
                     }
                     throw new Error('未登录');
                 }
@@ -690,7 +690,7 @@
                 if (response.status === 401) {
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('currentUser');
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     throw new Error('登录已过期');
                 }
                 if (!response.ok) {

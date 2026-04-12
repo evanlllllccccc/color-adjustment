@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>素材管理 - 传统色彩数字工坊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei",sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,250,245,0.95);
+            padding: 20px 30px;
+            border-bottom: 1px solid #d4b2a2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #8c5c3b;
+            font-weight: bold;
+        }
+
+        .header-btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(255,250,245,0.93);
+            padding: 30px 0;
+            border-right: 1px solid #d4b2a2;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            color: #7a513c;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .nav-item:hover, .nav-item.active {
+                background: rgba(177,122,84,0.1);
+                border-left-color: #b17a54;
+                color: #b17a54;
+            }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: rgba(255,250,245,0.95);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #d4b2a2;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 24px;
+            color: #8c5c3b;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+            .form-group label {
+                display: block;
+                color: #7a513c;
+                margin-bottom: 8px;
+            }
+
+            .form-group input[type="file"], .form-group input[type="text"] {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2c9b8;
+                border-radius: 6px;
+            }
+
+        .btn {
+            background: #b17a54;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .btn-ai {
+            background: #7a9cc6;
+        }
+
+        .material-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+            gap: 15px;
+        }
+
+        .material-item {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2c9b8;
+            position: relative;
+        }
+
+            .material-item img {
+                width: 100%;
+                height: 140px;
+                object-fit: cover;
+            }
+
+        .material-info {
+            padding: 8px;
+            font-size: 13px;
+            color: #8c5c3b;
+        }
+
+        .material-del {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #c95a5a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">素材管理</div>
+        <button class="header-btn" onclick="logout()">退出登录</button>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <div class="nav-item" onclick="goTo('管理员主界面.html')">🏠 首页</div>
+            <div class="nav-item" onclick="goTo('管理员统计.html')">📊 数据统计</div>
+            <div class="nav-item" onclick="goTo('管理员评论.html')">💬 评论监管</div>
+            <div class="nav-item active" onclick="goTo('管理员素材.html')">🖼️ 素材管理</div>
+            <div class="nav-item" onclick="goTo('管理员作品库.html')">🎨 用户作品库</div>
+            <div class="nav-item" onclick="goTo('管理员排行榜.html')">🏆 热度排行</div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="title">📤 上传新素材</div>
+                <div class="form-group">
+                    <label>选择图片</label>
+                    <input type="file" id="materialFile" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>素材名称</label>
+                    <input type="text" id="materialName" placeholder="例如：荷花线稿">
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <input type="text" id="materialCategory" placeholder="例如：花卉植物">
+                </div>
+                <div>
+                    <button class="btn" onclick="uploadMaterial()">上传素材</button>
+                    <button class="btn btn-ai" onclick="generateAI()">🤖 AI推荐标签</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="title">📁 已上传素材</div>
+                <div class="material-grid" id="materialGrid">加载中...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+        function goTo(p) { location.href = p; }
+        function logout() { localStorage.removeItem('currentUser'); location.href = 'index.html'; }
+
+        (function () {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!user || user.role !== 'admin') { alert('无权限'); location.href = 'index.html'; }
+        })();
+
+        async function uploadMaterial() {
+            const file = document.getElementById('materialFile').files[0];
+            const name = document.getElementById('materialName').value.trim();
+            const category = document.getElementById('materialCategory').value.trim();
+            if (!file || !name || !category) { alert('请完整填写'); return; }
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('name', name);
+            formData.append('category', category);
+            try {
+                await fetch(`${API_BASE}/api/admin/materials`, { method: 'POST', body: formData });
+                alert('上传成功');
+                document.getElementById('materialFile').value = '';
+                document.getElementById('materialName').value = '';
+                document.getElementById('materialCategory').value = '';
+                loadMaterials();
+            } catch (e) { alert('上传失败'); }
+        }
+
+        function generateAI() {
+            const tags = ['自然风景', '传统纹样', '古典建筑', '花卉植物', '动物图案', '几何图形'];
+            document.getElementById('materialCategory').value = tags[Math.floor(Math.random() * tags.length)];
+            alert('已推荐分类');
+        }
+
+        async function loadMaterials() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/materials`);
+                const data = await res.json();
+                const materials = data.materials || data || [];
+                const grid = document.getElementById('materialGrid');
+                if (!materials.length) { grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#a87f61;">暂无素材</div>'; return; }
+                grid.innerHTML = materials.map(m => `
+                    <div class="material-item">
+                        <img src="${m.imageUrl || m.img}" onerror="this.src='https://picsum.photos/200/160'">
+                        <button class="material-del" onclick="deleteMaterial('${m.id}')">删除</button>
+                        <div class="material-info">
+                            <div>${escapeHtml(m.name)}</div>
+                            <div style="font-size:12px; color:#a87f61;">${escapeHtml(m.category || '未分类')}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { document.getElementById('materialGrid').innerHTML = '<div>加载失败</div>'; }
+        }
+
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        window.deleteMaterial = async function (id) {
+            if (!confirm('确定删除？')) return;
+            try {
+                await fetch(`${API_BASE}/api/admin/materials/${id}`, { method: 'DELETE' });
+                loadMaterials();
+            } catch (e) { alert('删除失败'); }
+        };
+
+        window.onload = loadMaterials;
+    </script>
+</body>
+</html>

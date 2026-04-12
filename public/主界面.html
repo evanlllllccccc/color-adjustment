@@ -184,7 +184,7 @@
     <script>
         (function () {
             // 后端基础地址
-            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            const API_BASE = ' ';
 
             // 获取存储的 token
             const authToken = localStorage.getItem('authToken');
@@ -212,7 +212,7 @@
                     loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
                     userNav.innerHTML = `
                             <a href="介绍界面.html">项目介绍</a>
-                            <a href="login.html">登录/注册</a>
+                            <a href="index.html">登录/注册</a>
                         `;
                     return;
                 }
@@ -250,7 +250,7 @@
                     loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
                     userNav.innerHTML = `
                             <a href="介绍界面.html">项目介绍</a>
-                            <a href="login.html">登录/注册</a>
+                            <a href="index.html">登录/注册</a>
                         `;
                 }
             }
