@@ -3,85 +3,66 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const app = express();
 
-// 强制刷新输出流，确保日志实时显示
-process.stdout.write = process.stdout.write.bind(process.stdout);
-process.stderr.write = process.stderr.write.bind(process.stderr);
+// ====================== 跨域配置 ======================
+// 允许前端域名（包括本地开发、Vercel 和您的阿里云 OSS）
+const allowedOrigins = [
+    'https://color-adjustment.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://colorad.oss-cn-beijing.aliyuncs.com'   // 您的阿里云 OSS 域名
+];
 
-console.log('=== 应用启动中 ===');
-
-// 跨域配置
 app.use(cors({
-    origin: [
-        "https://color-adjustment.vercel.app",
-        "http://localhost:3000"
-    ],
+    origin: function (origin, callback) {
+        // 允许没有 origin 的请求（如 Postman）
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn('⚠️ CORS 阻止了来自:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '.')));
 
-// ======================================
-// 关键修复：先启动HTTP服务，再初始化数据库
-// ======================================
+// ====================== 数据库初始化（关键修复） ======================
+// 使用 Railway 可写路径
+const dbPath = process.env.NODE_ENV === 'production'
+    ? path.join('/app', 'database.db')    // Railway 容器内固定路径
+    : path.join(__dirname, 'database.db');
 
-// 健康检查端点（立即响应，不依赖数据库）
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+console.log('📁 数据库路径:', dbPath);
+
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('❌ 数据库连接失败:', err.message);
+        process.exit(1);
+    }
+    console.log('✅ 数据库连接成功');
 });
 
-// 测试根路径
-app.get('/', (req, res) => {
-    res.json({ message: 'Server is running', status: 'ok' });
-});
-
-// 立即启动HTTP服务（不等待数据库）
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 服务器运行在端口 ${PORT}`);
-    console.log(`📍 健康检查: http://0.0.0.0:${PORT}/health`);
-    console.log(`📍 根路径: http://0.0.0.0:${PORT}/`);
-}).on('error', (err) => {
-    console.error('❌ 服务器启动失败:', err.message);
-    process.exit(1);
-});
-
-// ======================================
-// 数据库初始化（异步，不阻塞HTTP启动）
-// ======================================
-
-// 数据库路径：在 Railway 中确保目录可写
-const dbDir = process.env.NODE_ENV === 'production' ? '/app' : __dirname;
-const dbPath = path.join(dbDir, 'database.db');
-
-console.log('数据库路径:', dbPath);
-
-// 确保目录存在
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+// 封装 Promise 以顺序初始化表
+function runAsync(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) reject(err);
+            else resolve(this);
+        });
+    });
 }
 
-// 异步连接数据库（不阻塞）
-let db;
-setTimeout(() => {
-    db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            console.error('❌ 数据库打开失败:', err.message);
-        } else {
-            console.log('✅ 数据库连接成功');
-            initDatabase();
-        }
-    });
-}, 100); // 延迟100ms确保HTTP先启动
-
-function initDatabase() {
-    db.serialize(() => {
-        db.run(`CREATE TABLE IF NOT EXISTS users (
+async function initDatabase() {
+    try {
+        // 创建表（如果不存在）
+        await runAsync(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT,
@@ -89,14 +70,18 @@ function initDatabase() {
             loginToday INTEGER DEFAULT 0,
             lastLoginDate TEXT
         )`);
-        db.run(`CREATE TABLE IF NOT EXISTS images (
+        console.log('✅ users 表已就绪');
+
+        await runAsync(`CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             path TEXT,
             dyeCount INTEGER DEFAULT 0,
             aiScore REAL DEFAULT 0
         )`);
-        db.run(`CREATE TABLE IF NOT EXISTS dyeRecords (
+        console.log('✅ images 表已就绪');
+
+        await runAsync(`CREATE TABLE IF NOT EXISTS dyeRecords (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             userId INTEGER,
             imageId INTEGER,
@@ -107,38 +92,71 @@ function initDatabase() {
             collect INTEGER DEFAULT 0,
             createTime TEXT
         )`);
-        db.run(`CREATE TABLE IF NOT EXISTS blockWords (
+        console.log('✅ dyeRecords 表已就绪');
+
+        await runAsync(`CREATE TABLE IF NOT EXISTS blockWords (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             word TEXT UNIQUE
         )`);
-        db.run(`INSERT OR IGNORE INTO users (username,password,role) VALUES ('admin','123456','admin')`);
-        console.log('✅ 数据库表初始化完成');
-    });
+        console.log('✅ blockWords 表已就绪');
+
+        // 插入默认管理员账号（如果不存在）
+        await runAsync(
+            `INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)`,
+            ['admin', '123456', 'admin']
+        );
+        console.log('✅ 默认管理员账号已确保存在');
+
+        console.log('🎉 数据库初始化完成');
+    } catch (err) {
+        console.error('❌ 数据库初始化失败:', err.message);
+        process.exit(1);
+    }
 }
 
-// ====================== 路由 ======================
-app.post('/api/login', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
-    const { username, password } = req.body;
-    const today = new Date().toISOString().split('T')[0];
-    db.get(`SELECT * FROM users WHERE username=? AND password=?`, [username, password], (err, row) => {
-        if (err) {
-            console.error('登录查询错误:', err);
-            return res.status(500).json({ success: false, msg: '服务器错误' });
-        }
-        if (!row) return res.json({ success: false, msg: '账号或密码错误' });
-        db.run(`UPDATE users SET loginToday=?, lastLoginDate=? WHERE id=?`,
-            row.lastLoginDate !== today ? 1 : row.loginToday + 1, today, row.id);
-        res.json({ success: true, user: row });
-    });
+// ====================== 业务接口 ======================
+
+// 健康检查（Railway 探针）
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
 });
 
+// 登录
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, msg: '账号和密码不能为空' });
+    }
+    const today = new Date().toISOString().split('T')[0];
+    db.get(
+        `SELECT * FROM users WHERE username=? AND password=?`,
+        [username, password],
+        (err, row) => {
+            if (err) {
+                console.error('登录查询错误:', err);
+                return res.status(500).json({ success: false, msg: '服务器错误' });
+            }
+            if (!row) return res.json({ success: false, msg: '账号或密码错误' });
+
+            // 更新登录统计
+            db.run(
+                `UPDATE users SET loginToday=?, lastLoginDate=? WHERE id=?`,
+                [row.lastLoginDate !== today ? 1 : row.loginToday + 1, today, row.id]
+            );
+            // 不返回密码字段
+            const { password, ...userWithoutPassword } = row;
+            res.json({ success: true, user: userWithoutPassword });
+        }
+    );
+});
+
+// 游客模式
 app.post('/api/guest', (req, res) => {
     res.json({ success: true, userId: 0 });
 });
 
+// ====================== 屏蔽词管理 ======================
 app.get('/api/block-words', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     db.all(`SELECT word FROM blockWords`, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -146,16 +164,16 @@ app.get('/api/block-words', (req, res) => {
 });
 
 app.post('/api/add-block-word', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { word } = req.body;
-    db.run(`INSERT OR IGNORE INTO blockWords (word) VALUES (?)`, [word], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+    if (!word) return res.status(400).json({ success: false, msg: '缺少 word' });
+    db.run(`INSERT OR IGNORE INTO blockWords (word) VALUES (?)`, [word], function (err) {
+        if (err) return res.status(500).json({ success: false, msg: err.message });
         res.json({ success: true });
     });
 });
 
+// 检查屏蔽词（内部函数）
 function checkBlockWord(comment, callback) {
-    if (!db) return callback(false);
     db.all(`SELECT word FROM blockWords`, (err, words) => {
         if (err) return callback(false);
         const hasBlock = words.some(item => comment.includes(item.word));
@@ -163,17 +181,8 @@ function checkBlockWord(comment, callback) {
     });
 }
 
-app.get('/api/today-login', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
-    const today = new Date().toISOString().split('T')[0];
-    db.get(`SELECT COUNT(*) AS num FROM users WHERE lastLoginDate=?`, [today], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ num: row?.num || 0 });
-    });
-});
-
+// ====================== 图片管理 ======================
 app.get('/api/images', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     db.all(`SELECT * FROM images`, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -187,62 +196,71 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.post('/api/upload-image', upload.single('file'), (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
-    if (!req.file) return res.status(400).json({ error: '没有上传文件' });
+    if (!req.file) return res.status(400).json({ success: false, msg: '没有上传文件' });
     const { filename } = req.file;
     db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [filename, filename], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) return res.status(500).json({ success: false, msg: err.message });
         res.json({ success: true, id: this.lastID });
     });
 });
 
 app.post('/api/add-dye-count', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { imageId } = req.body;
+    if (!imageId) return res.status(400).json({ success: false, msg: '缺少 imageId' });
     db.run(`UPDATE images SET dyeCount = dyeCount + 1 WHERE id=?`, [imageId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) return res.status(500).json({ success: false, msg: err.message });
         res.json({ success: true });
     });
 });
 
+// ====================== 染色记录 ======================
 app.post('/api/submit-dye', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { userId, imageId, score, comment, colors, draft } = req.body;
-    checkBlockWord(comment, (hasBlock) => {
+    if (!userId || !imageId) {
+        return res.status(400).json({ success: false, msg: '缺少必要参数' });
+    }
+    checkBlockWord(comment || '', (hasBlock) => {
         if (hasBlock) return res.json({ success: false, msg: '包含不当语言' });
         const time = new Date().toISOString();
-        db.run(`INSERT INTO dyeRecords (userId,imageId,score,comment,colors,draft,createTime) VALUES (?,?,?,?,?,?,?)`,
-            [userId, imageId, score, comment, colors, draft, time], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+        db.run(
+            `INSERT INTO dyeRecords (userId,imageId,score,comment,colors,draft,createTime) VALUES (?,?,?,?,?,?,?)`,
+            [userId, imageId, score || 0, comment || '', colors || '', draft ? 1 : 0, time],
+            function (err) {
+                if (err) return res.status(500).json({ success: false, msg: err.message });
                 if (!draft) {
                     db.run(`UPDATE images SET dyeCount = dyeCount + 1 WHERE id=?`, [imageId]);
                 }
                 res.json({ success: true, id: this.lastID });
-            });
+            }
+        );
     });
 });
 
 app.post('/api/my-works', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { userId, draft } = req.body;
-    db.all(`SELECT * FROM dyeRecords WHERE userId=? AND draft=?`, [userId, draft], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+    if (!userId) return res.status(400).json({ success: false, msg: '缺少 userId' });
+    db.all(
+        `SELECT * FROM dyeRecords WHERE userId=? AND draft=?`,
+        [userId, draft ? 1 : 0],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        }
+    );
 });
 
 app.post('/api/collect-work', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { id } = req.body;
+    if (!id) return res.status(400).json({ success: false, msg: '缺少 id' });
     db.run(`UPDATE dyeRecords SET collect=1 WHERE id=?`, [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) return res.status(500).json({ success: false, msg: err.message });
         res.json({ success: true });
     });
 });
 
 app.post('/api/my-collect', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { userId } = req.body;
+    if (!userId) return res.status(400).json({ success: false, msg: '缺少 userId' });
     db.all(`SELECT * FROM dyeRecords WHERE userId=? AND collect=1`, [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -250,29 +268,34 @@ app.post('/api/my-collect', (req, res) => {
 });
 
 app.post('/api/my-comments', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
     const { userId } = req.body;
+    if (!userId) return res.status(400).json({ success: false, msg: '缺少 userId' });
     db.all(`SELECT * FROM dyeRecords WHERE userId=?`, [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
+// ====================== 排行榜 ======================
 app.get('/api/rank', (req, res) => {
-    if (!db) return res.status(503).json({ error: 'Database not ready' });
-    db.all(`SELECT userId, AVG(score) AS avgScore FROM dyeRecords WHERE draft=0 GROUP BY userId ORDER BY avgScore DESC LIMIT 50`,
+    db.all(
+        `SELECT userId, AVG(score) AS avgScore FROM dyeRecords WHERE draft=0 GROUP BY userId ORDER BY avgScore DESC LIMIT 50`,
         (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json(rows);
-        });
+        }
+    );
 });
 
-// 优雅关闭
-process.on('SIGTERM', () => {
-    console.log('收到 SIGTERM，关闭服务器...');
-    server.close(() => {
-        if (db) db.close();
-        console.log('服务器已关闭');
-        process.exit(0);
+// ====================== 启动服务器 ======================
+const PORT = process.env.PORT || 3000;
+
+// 先初始化数据库，再启动监听
+initDatabase().then(() => {
+    app.listen(PORT, () => {
+        console.log(`🚀 服务器运行在端口 ${PORT}`);
     });
+}).catch(err => {
+    console.error('启动失败:', err);
+    process.exit(1);
 });
