@@ -6,49 +6,11 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 
- HEAD
-// ======================================
-// ✅ 修复跨域（允许 Vercel 访问）
-// ======================================
-app.use(cors({
-    origin: [
-        "https://color-adjustment.vercel.app",
-        "http://localhost:3000"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-}));
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '.')));
-
-// ======================================
-// ✅ 修复 Railway 数据库路径（关键！）
-// ======================================
-const dbPath = process.env.NODE_ENV === 'production'
-    ? '/app/database.db'
-    : path.join(__dirname, 'database.db');
-
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) console.error("数据库错误:", err);
-    else console.log("数据库连接成功");
-});
-
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT,
-    role TEXT DEFAULT 'user',
-    loginToday INTEGER DEFAULT 0,
-    lastLoginDate TEXT
-  )`);
 // 强制刷新输出流，确保日志实时显示
 process.stdout.write = process.stdout.write.bind(process.stdout);
 process.stderr.write = process.stderr.write.bind(process.stderr);
 
 console.log('=== 应用启动中 ===');
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 
 // 跨域配置
 app.use(cors({
@@ -74,19 +36,16 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
 
-// 修改数据库连接部分
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('❌ 数据库打开失败:', err.message);
-        // 不退出，让 HTTP 服务先启动，方便排查问题
+        process.exit(1);
     } else {
         console.log('✅ 数据库连接成功');
         initDatabase();
     }
 });
 
-HEAD
-// ====================== 登录 ======================
 function initDatabase() {
     db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -125,7 +84,6 @@ function initDatabase() {
 }
 
 // ====================== 路由 ======================
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const today = new Date().toISOString().split('T')[0];
@@ -145,9 +103,6 @@ app.post('/api/guest', (req, res) => {
     res.json({ success: true, userId: 0 });
 });
 
-HEAD
-// ====================== 屏蔽词 ======================
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.get('/api/block-words', (req, res) => {
     db.all(`SELECT word FROM blockWords`, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -171,9 +126,6 @@ function checkBlockWord(comment, callback) {
     });
 }
 
-HEAD
-// ====================== 统计 ======================
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.get('/api/today-login', (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     db.get(`SELECT COUNT(*) AS num FROM users WHERE lastLoginDate=?`, [today], (err, row) => {
@@ -182,9 +134,6 @@ app.get('/api/today-login', (req, res) => {
     });
 });
 
-HEAD
-// ====================== 图片 ======================
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.get('/api/images', (req, res) => {
     db.all(`SELECT * FROM images`, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -200,7 +149,7 @@ const upload = multer({ storage });
 app.post('/api/upload-image', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '没有上传文件' });
     const { filename } = req.file;
-    db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [filename, filename], function(err) {
+    db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [filename, filename], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, id: this.lastID });
     });
@@ -214,16 +163,13 @@ app.post('/api/add-dye-count', (req, res) => {
     });
 });
 
-HEAD
-    // ====================== 染色记录 ======================
-    af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.post('/api/submit-dye', (req, res) => {
     const { userId, imageId, score, comment, colors, draft } = req.body;
     checkBlockWord(comment, (hasBlock) => {
         if (hasBlock) return res.json({ success: false, msg: '包含不当语言' });
         const time = new Date().toISOString();
         db.run(`INSERT INTO dyeRecords (userId,imageId,score,comment,colors,draft,createTime) VALUES (?,?,?,?,?,?,?)`,
-            [userId, imageId, score, comment, colors, draft, time], function(err) {
+            [userId, imageId, score, comment, colors, draft, time], function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 if (!draft) {
                     db.run(`UPDATE images SET dyeCount = dyeCount + 1 WHERE id=?`, [imageId]);
@@ -259,18 +205,12 @@ app.post('/api/my-collect', (req, res) => {
 
 app.post('/api/my-comments', (req, res) => {
     const { userId } = req.body;
-HEAD
-    db.all(`SELECT * FROM dyeRecords WHERE userId=?`, [userId], (err, rows) => res.json(rows));
-});
-
-// ====================== 排行榜 ======================
     db.all(`SELECT * FROM dyeRecords WHERE userId=?`, [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
 app.get('/api/rank', (req, res) => {
     db.all(`SELECT userId, AVG(score) AS avgScore FROM dyeRecords WHERE draft=0 GROUP BY userId ORDER BY avgScore DESC LIMIT 50`,
         (err, rows) => {
@@ -279,25 +219,16 @@ app.get('/api/rank', (req, res) => {
         });
 });
 
- HEAD
-// ======================================
-// ✅ 修复端口（Railway 必须用这个）
-// ======================================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`服务器运行在端口 ${PORT}`);
-});
 // 健康检查端点
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ======================================
-// ✅ 端口监听（带错误捕获 + 0.0.0.0 绑定）
+// Railway 部署修复：使用环境变量PORT + 绑定0.0.0.0
 // ======================================
 const PORT = process.env.PORT || 3000;
 
-// 注意：'0.0.0.0' 是必须的，让 Railway 可以从外部访问
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 服务器运行在端口 ${PORT}`);
     console.log(`📍 健康检查: http://0.0.0.0:${PORT}/health`);
@@ -315,4 +246,3 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
-af0c46ff1e9ba4f1ec4cdecdf9af8163f53d16c
