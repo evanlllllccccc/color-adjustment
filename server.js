@@ -5,13 +5,33 @@ const multer = require('multer');
 const path = require('path');
 const app = express();
 
-// 中间件
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '.'))); // 修复线上路径
+// ======================================
+// ✅ 修复跨域（允许 Vercel 访问）
+// ======================================
+app.use(cors({
+    origin: [
+        "https://color-adjustment.vercel.app",
+        "http://localhost:3000"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
 
-// 数据库初始化（线上也能用）
-const db = new sqlite3.Database(path.join(__dirname, './database.db'));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '.')));
+
+// ======================================
+// ✅ 修复 Railway 数据库路径（关键！）
+// ======================================
+const dbPath = process.env.NODE_ENV === 'production'
+    ? '/app/database.db'
+    : path.join(__dirname, 'database.db');
+
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) console.error("数据库错误:", err);
+    else console.log("数据库连接成功");
+});
+
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +70,7 @@ db.serialize(() => {
     db.run(`INSERT OR IGNORE INTO users (username,password,role) VALUES ('admin','123456','admin')`);
 });
 
-// ====================== 1. 登录相关 ======================
+// ====================== 登录 ======================
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const today = new Date().toISOString().split('T')[0];
@@ -66,7 +86,7 @@ app.post('/api/guest', (req, res) => {
     res.json({ success: true, userId: 0 });
 });
 
-// ====================== 2. 屏蔽词 ======================
+// ====================== 屏蔽词 ======================
 app.get('/api/block-words', (req, res) => {
     db.all(`SELECT word FROM blockWords`, (err, rows) => res.json(rows));
 });
@@ -85,7 +105,7 @@ function checkBlockWord(comment, callback) {
     });
 }
 
-// ====================== 3. 数据统计 ======================
+// ====================== 统计 ======================
 app.get('/api/today-login', (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     db.get(`SELECT COUNT(*) AS num FROM users WHERE lastLoginDate=?`, [today], (err, row) => {
@@ -93,7 +113,7 @@ app.get('/api/today-login', (req, res) => {
     });
 });
 
-// ====================== 4. 图片管理 ======================
+// ====================== 图片 ======================
 app.get('/api/images', (req, res) => {
     db.all(`SELECT * FROM images`, (err, rows) => res.json(rows));
 });
@@ -117,7 +137,7 @@ app.post('/api/add-dye-count', (req, res) => {
     });
 });
 
-// ====================== 5. 染色/打分/评价/收藏 ======================
+// ====================== 染色记录 ======================
 app.post('/api/submit-dye', (req, res) => {
     const { userId, imageId, score, comment, colors, draft } = req.body;
     checkBlockWord(comment, (hasBlock) => {
@@ -154,18 +174,19 @@ app.post('/api/my-collect', (req, res) => {
 
 app.post('/api/my-comments', (req, res) => {
     const { userId } = req.body;
-    db.all(`SELECT * FROM dyeRecords WHERE imageId IN (SELECT id FROM images WHERE id IN (SELECT imageId FROM dyeRecords WHERE userId=?))`,
-        [userId], (err, rows) => res.json(rows));
+    db.all(`SELECT * FROM dyeRecords WHERE userId=?`, [userId], (err, rows) => res.json(rows));
 });
 
-// ====================== 6. 排行榜 ======================
+// ====================== 排行榜 ======================
 app.get('/api/rank', (req, res) => {
     db.all(`SELECT userId, AVG(score) AS avgScore FROM dyeRecords WHERE draft=0 GROUP BY userId ORDER BY avgScore DESC LIMIT 50`,
         (err, rows) => res.json(rows));
 });
 
-// ====================== 启动服务（线上必须用 process.env.PORT） ======================
+// ======================================
+// ✅ 修复端口（Railway 必须用这个）
+// ======================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`服务已启动：端口 ${PORT}`);
+    console.log(`服务器运行在端口 ${PORT}`);
 });
