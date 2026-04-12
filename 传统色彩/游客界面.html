@@ -371,81 +371,99 @@
     </footer>
 
     <script>
-        // 从 localStorage 读取真实作品数据，按点赞量排序
-        function loadHotWorks() {
-            const worksGrid = document.getElementById('worksGrid');
-            let allWorks = [];
+        (function () {
+            // 后端 API 基础地址
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
 
-            // 遍历所有用户的作品
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    const author = key.replace("myWorks_", "");
-                    const userDetails = JSON.parse(localStorage.getItem("userDetails_" + author) || "{}");
-                    const works = JSON.parse(localStorage.getItem(key) || "[]");
+            // 从后端获取热门作品（公开接口，无需 token）
+            async function loadHotWorks() {
+                const worksGrid = document.getElementById('worksGrid');
 
-                    works.forEach((work, idx) => {
-                        allWorks.push({
-                            id: author + "_" + idx,
-                            title: work.title,
-                            img: work.img,
-                            author: author,
-                            authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${author.length}`,
-                            likes: work.likes || 0,
-                            views: work.views || 0,
-                            time: work.time || new Date().toISOString(),
-                            description: work.description || "传统染色作品"
-                        });
-                    });
+                try {
+                    // 假设后端提供公开作品列表接口，支持按热度排序
+                    // 可根据实际 API 调整参数，例如 ?sort=likes&limit=6
+                    const response = await fetch(`${API_BASE}/api/works/public?sort=likes&limit=6`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    // 根据实际返回结构调整：可能是 { works: [...] } 或直接数组
+                    const works = Array.isArray(data) ? data : (data.works || data.data || []);
+
+                    if (works.length === 0) {
+                        worksGrid.innerHTML = `
+                                <div class="empty-state" style="grid-column: 1/-1;">
+                                    <div style="font-size:48px; margin-bottom:15px;">🎨</div>
+                                    暂无作品<br>
+                                    <a href="login.html" style="color:#b17a54; text-decoration:none; margin-top:10px; display:inline-block;">登录后成为第一个创作者 →</a>
+                                </div>
+                            `;
+                        return;
+                    }
+
+                    // 渲染作品卡片
+                    worksGrid.innerHTML = works.map(work => {
+                        // 兼容字段名差异
+                        const title = work.title || '未命名作品';
+                        const imageUrl = work.imageUrl || work.img || 'https://picsum.photos/400/300?random=' + work.id;
+                        const authorName = work.author?.account || work.authorName || '匿名用户';
+                        const authorAvatar = work.author?.avatar || `https://picsum.photos/200/200?random=${authorName.length}`;
+                        const likes = work.likes || 0;
+                        const views = work.views || 0;
+                        const createdAt = work.createdAt || work.time || new Date().toISOString();
+
+                        return `
+                                <div class="work-card">
+                                    <img src="${imageUrl}" class="work-image" alt="${title}" onerror="this.src='https://picsum.photos/400/300?random=${work.id}'">
+                                    <div class="work-content">
+                                        <div class="work-title">${escapeHtml(title)}</div>
+                                        <div class="work-author">
+                                            <img src="${authorAvatar}" class="author-avatar" onerror="this.src='https://picsum.photos/200/200?random=avatar'">
+                                            <span>作者：${escapeHtml(authorName)}</span>
+                                        </div>
+                                        <div class="work-stats">
+                                            <div class="stat">
+                                                <div class="stat-value">❤️ ${likes}</div>
+                                                <div class="stat-label">点赞</div>
+                                            </div>
+                                            <div class="stat">
+                                                <div class="stat-value">👁️ ${views}</div>
+                                                <div class="stat-label">浏览</div>
+                                            </div>
+                                        </div>
+                                        <div class="work-time">发布时间：${new Date(createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                            `;
+                    }).join('');
+
+                } catch (error) {
+                    console.error('加载热门作品失败:', error);
+                    worksGrid.innerHTML = `
+                            <div class="empty-state" style="grid-column: 1/-1;">
+                                <div style="font-size:48px; margin-bottom:15px;">⚠️</div>
+                                加载失败，请稍后重试<br>
+                                <button onclick="location.reload()" style="margin-top:15px; padding:8px 20px; background:#b17a54; color:white; border:none; border-radius:20px; cursor:pointer;">重新加载</button>
+                            </div>
+                        `;
                 }
             }
 
-            // 按点赞量排序
-            allWorks.sort((a, b) => b.likes - a.likes);
-
-            // 只显示前6个热门作品
-            const hotWorks = allWorks.slice(0, 6);
-
-            if (hotWorks.length === 0) {
-                worksGrid.innerHTML = `
-              <div class="empty-state" style="grid-column: 1/-1;">
-                <div style="font-size:48px; margin-bottom:15px;">🎨</div>
-                暂无作品<br>
-                <a href="login.html" style="color:#b17a54; text-decoration:none; margin-top:10px; display:inline-block;">登录后成为第一个创作者 →</a>
-              </div>
-            `;
-                return;
+            // 简单的转义函数防止 XSS
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
 
-            worksGrid.innerHTML = hotWorks.map(work => `
-            <div class="work-card">
-              <img src="${work.img}" class="work-image" alt="${work.title}" onerror="this.src='https://picsum.photos/400/300?random=${work.id}'">
-              <div class="work-content">
-                <div class="work-title">${work.title}</div>
-                <div class="work-author">
-                  <img src="${work.authorAvatar}" class="author-avatar">
-                  <span>作者：${work.author}</span>
-                </div>
-                <div class="work-stats">
-                  <div class="stat">
-                    <div class="stat-value">❤️ ${work.likes}</div>
-                    <div class="stat-label">点赞</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-value">👁️ ${work.views}</div>
-                    <div class="stat-label">浏览</div>
-                  </div>
-                </div>
-                <div class="work-time">发布时间：${new Date(work.time).toLocaleDateString()}</div>
-              </div>
-            </div>
-          `).join('');
-        }
-
-        // 页面加载时渲染
-        window.onload = function () {
-            loadHotWorks();
-        };
+            // 页面加载时执行
+            window.onload = loadHotWorks;
+        })();
     </script>
-    <script src="ai-chat.js"></script>
+    <!-- 如果不需要 AI 聊天可以删除，但保留也无妨 -->
+    <!-- <script src="ai-chat.js"></script> -->
 </body>
 </html>

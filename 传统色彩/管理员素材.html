@@ -78,6 +78,7 @@
             font-size: 16px;
             transition: 0.3s;
             border-left: 4px solid transparent;
+            cursor: pointer;
         }
 
             .nav-item:hover {
@@ -191,7 +192,6 @@
                 transform: translateY(-2px);
             }
 
-        /* 素材列表样式 */
         .material-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -236,17 +236,17 @@
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 素材管理</div>
-        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">返回登录界面</button>
     </div>
 
     <div class="main-container">
         <div class="sidebar">
-            <a href="管理员主界面.html" class="nav-item">首页</a>
-            <a href="管理员统计.html" class="nav-item">数据统计</a>
-            <a href="管理员评论.html" class="nav-item">评论监管</a>
-            <a href="管理员素材.html" class="nav-item active">素材管理</a>
-            <a href="管理员AI评分.html" class="nav-item">AI评分</a>
-            <a href="管理员排行榜.html" class="nav-item">热度排行</a>
+            <div class="nav-item" onclick="goToPage('管理员主界面.html')">首页</div>
+            <div class="nav-item" onclick="goToPage('管理员统计.html')">数据统计</div>
+            <div class="nav-item" onclick="goToPage('管理员评论.html')">评论监管</div>
+            <div class="nav-item active" onclick="goToPage('管理员素材.html')">素材管理</div>
+            <div class="nav-item" onclick="goToPage('管理员AI评分.html')">AI评分</div>
+            <div class="nav-item" onclick="goToPage('管理员排行榜.html')">热度排行</div>
         </div>
 
         <div class="content">
@@ -272,111 +272,148 @@
                 </div>
             </div>
 
-            <!-- 已上传素材列表 -->
             <div class="content-card">
                 <div class="content-title">已上传素材（用户染色可见）</div>
-                <div id="materialGrid" class="material-grid"></div>
+                <div id="materialGrid" class="material-grid">加载中...</div>
             </div>
         </div>
     </div>
 
     <script>
-        // 上传素材（已修复：保存到用户可读取的公共素材库）
-        function uploadMaterial() {
-            var file = document.getElementById('materialFile').files[0];
-            var name = document.getElementById('materialName').value;
-            var category = document.getElementById('materialCategory').value;
+        (function () {
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            const authToken = localStorage.getItem('authToken') || localStorage.getItem('adminToken');
 
-            if (!file) {
-                alert('请选择素材图片');
-                return;
-            }
-            if (!name) {
-                alert('请输入素材名称');
-                return;
-            }
-            if (!category) {
-                alert('请输入素材分类');
-                return;
+            if (!authToken) {
+                alert('请先登录管理员账号');
+                window.location.href = '管理员界面.html';
             }
 
-            let reader = new FileReader();
-            reader.onload = function (e) {
-                let imgUrl = e.target.result;
+            async function apiRequest(endpoint, options = {}) {
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                };
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+                if (resp.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '管理员界面.html';
+                    throw new Error('登录已过期');
+                }
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(`请求失败: ${resp.status} ${err}`);
+                }
+                return resp.json();
+            }
 
-                // 读取公共素材库
-                let templates = JSON.parse(localStorage.getItem('adminTemplates') || '[]');
+            window.logout = function () {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('adminToken');
+                window.location.href = '管理员界面.html';
+            };
 
-                // 加入新素材
-                templates.unshift({
-                    id: Date.now(),
-                    name: name,
-                    category: category,
-                    img: imgUrl
-                });
+            window.goToPage = function (page) {
+                window.location.href = page;
+            };
 
-                // 保存
-                localStorage.setItem('adminTemplates', JSON.stringify(templates));
+            // 上传素材
+            window.uploadMaterial = async function () {
+                const fileInput = document.getElementById('materialFile');
+                const nameInput = document.getElementById('materialName');
+                const categoryInput = document.getElementById('materialCategory');
 
-                alert('素材上传成功！用户已可在染色工坊使用');
+                const file = fileInput.files[0];
+                const name = nameInput.value.trim();
+                const category = categoryInput.value.trim();
 
-                // 清空表单
-                document.getElementById('materialFile').value = '';
-                document.getElementById('materialName').value = '';
-                document.getElementById('materialCategory').value = '';
+                if (!file) { alert('请选择素材图片'); return; }
+                if (!name) { alert('请输入素材名称'); return; }
+                if (!category) { alert('请输入素材分类'); return; }
 
-                // 刷新列表
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('name', name);
+                formData.append('category', category);
+
+                try {
+                    await apiRequest('/api/admin/materials', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    alert('素材上传成功！');
+                    fileInput.value = '';
+                    nameInput.value = '';
+                    categoryInput.value = '';
+                    loadMaterialList();
+                } catch (e) {
+                    alert('上传失败: ' + e.message);
+                }
+            };
+
+            // AI 推荐标签（模拟，可替换为真实AI接口）
+            window.generateAIRecommendations = function () {
+                const categories = ['自然风景', '传统纹样', '古典建筑', '花卉植物', '动物图案', '几何图形'];
+                const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+                document.getElementById('materialCategory').value = randomCategory;
+                alert('AI推荐标签生成成功！\n推荐分类：' + randomCategory);
+            };
+
+            // 加载素材列表
+            async function loadMaterialList() {
+                const grid = document.getElementById('materialGrid');
+                grid.innerHTML = '加载中...';
+                try {
+                    const data = await apiRequest('/api/admin/materials');
+                    const materials = data.materials || data || [];
+                    if (materials.length === 0) {
+                        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#a87f61;">暂无素材</div>';
+                        return;
+                    }
+                    grid.innerHTML = materials.map(item => `
+                        <div class="material-item">
+                            <img src="${item.imageUrl || item.img}" alt="${escapeHtml(item.name)}" onerror="this.src='https://picsum.photos/200/160?random=${item.id}'">
+                            <button class="material-del" onclick="deleteMaterial('${item.id}')">删除</button>
+                            <div class="material-info">
+                                <div>${escapeHtml(item.name)}</div>
+                                <div style="font-size:12px;color:#a87f61;">${escapeHtml(item.category || '未分类')}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error('加载素材失败', e);
+                    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#a87f61;">加载失败，请刷新重试</div>';
+                }
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 删除素材
+            window.deleteMaterial = async function (id) {
+                if (!confirm('确定删除该素材？用户将无法再使用！')) return;
+                try {
+                    await apiRequest(`/api/admin/materials/${id}`, { method: 'DELETE' });
+                    alert('素材已删除');
+                    loadMaterialList();
+                } catch (e) {
+                    alert('删除失败: ' + e.message);
+                }
+            };
+
+            // 初始化
+            window.onload = function () {
                 loadMaterialList();
             };
-            reader.readAsDataURL(file);
-        }
-
-        // AI推荐标签
-        function generateAIRecommendations() {
-            var categories = ['自然风景', '传统纹样', '古典建筑', '花卉植物', '动物图案', '几何图形'];
-            var randomCategory = categories[Math.floor(Math.random() * categories.length)];
-            document.getElementById('materialCategory').value = randomCategory;
-            alert('AI推荐标签生成成功！\n推荐分类：' + randomCategory);
-        }
-
-        // 加载素材列表
-        function loadMaterialList() {
-            let list = JSON.parse(localStorage.getItem('adminTemplates') || '[]');
-            let grid = document.getElementById('materialGrid');
-            grid.innerHTML = '';
-
-            if (list.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#a87f61;">暂无素材</div>';
-                return;
-            }
-
-            list.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'material-item';
-                div.innerHTML = `
-              <img src="${item.img}">
-              <button class="material-del" onclick="delMaterial(${item.id})">删除</button>
-              <div class="material-info">
-                <div>${item.name}</div>
-                <div style="font-size:12px;color:#a87f61;">${item.category}</div>
-              </div>
-            `;
-                grid.appendChild(div);
-            });
-        }
-
-        // 删除素材
-        function delMaterial(id) {
-            if (!confirm('确定删除该素材？用户将无法再使用！')) return;
-            let list = JSON.parse(localStorage.getItem('adminTemplates') || '[]');
-            list = list.filter(i => i.id !== id);
-            localStorage.setItem('adminTemplates', JSON.stringify(list));
-            loadMaterialList();
-        }
-
-        // 页面加载时显示素材列表
-        window.onload = loadMaterialList;
+        })();
     </script>
-    <script src="ai-chat.js"></script>
 </body>
 </html>

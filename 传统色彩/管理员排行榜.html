@@ -249,7 +249,6 @@
             margin-bottom: 20px;
         }
 
-        /* 详情模态框 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -331,7 +330,7 @@
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 热度排行</div>
-        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">返回登录</button>
     </div>
 
     <div class="main-container">
@@ -346,12 +345,12 @@
 
         <div class="content">
             <div class="content-card">
-                <div class="content-title">作品点赞热度排行榜</div>
+                <div class="content-title">作品点赞热度排行榜（云端实时）</div>
 
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab('likes', this)">按点赞</div>
-                    <div class="tab" onclick="switchTab('views', this)">按浏览</div>
-                    <div class="tab" onclick="switchTab('new', this)">最新发布</div>
+                    <div class="tab" onclick="switchTab('views', this)">按染色次数</div>
+                    <div class="tab" onclick="switchTab('new', this)">默认排序</div>
                 </div>
 
                 <button class="refresh-btn" onclick="loadLeaderboard()">🔄 刷新排行</button>
@@ -363,7 +362,6 @@
         </div>
     </div>
 
-    <!-- 详情模态框 -->
     <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-title" id="modalTitle">作品详情</div>
@@ -375,13 +373,26 @@
     </div>
 
     <script>
+        // ==============================
+        // 后端地址（你的云端服务器）
+        // ==============================
+        const API = "https://color-adjustment-production.up.railway.app";
+
         let currentTab = 'likes';
         let allWorks = [];
 
+        // 页面跳转
         function goToPage(page) {
             window.location.href = page;
         }
 
+        // 退出登录
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+
+        // 切换排序
         function switchTab(type, element) {
             currentTab = type;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -389,48 +400,39 @@
             loadLeaderboard();
         }
 
-        function loadLeaderboard() {
-            allWorks = [];
+        // ==============================
+        // 从云端数据库加载排行榜
+        // ==============================
+        async function loadLeaderboard() {
+            try {
+                let res = await fetch(API + "/api/images");
+                let images = await res.json();
 
-            // 收集所有作品
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    const author = key.replace("myWorks_", "");
-                    const userDetails = JSON.parse(localStorage.getItem("userDetails_" + author) || "{}");
-                    const works = JSON.parse(localStorage.getItem(key) || "[]");
+                allWorks = images.map(img => ({
+                    id: img.id,
+                    title: img.name || "未命名素材",
+                    img: img.path,
+                    author: "系统",
+                    likes: img.dyeCount || 0,
+                    views: 0,
+                    time: new Date().toISOString(),
+                    comments: []
+                }));
 
-                    works.forEach((work, idx) => {
-                        allWorks.push({
-                            id: author + "_" + idx,
-                            title: work.title,
-                            img: work.img,
-                            author: author,
-                            authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${author.length}`,
-                            likes: work.likes || 0,
-                            views: work.views || 0,
-                            time: work.time || new Date().toISOString(),
-                            comments: work.comments || []
-                        });
-                    });
-                }
-            }
-
-            // 排序
-            switch (currentTab) {
-                case 'likes':
+                // 排序
+                if (currentTab === "likes") {
                     allWorks.sort((a, b) => b.likes - a.likes);
-                    break;
-                case 'views':
-                    allWorks.sort((a, b) => b.views - a.views);
-                    break;
-                case 'new':
-                    allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-                    break;
-            }
+                } else {
+                    allWorks.sort((a, b) => b.id - a.id);
+                }
 
-            renderLeaderboard();
+                renderLeaderboard();
+            } catch (err) {
+                document.getElementById("leaderboardList").innerHTML = `<div class="empty-state">加载失败</div>`;
+            }
         }
 
+        // 渲染列表
         function renderLeaderboard() {
             const list = document.getElementById('leaderboardList');
 
@@ -444,23 +446,24 @@
                 const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : (index + 1);
 
                 return `
-              <div class="leaderboard-item" onclick="showDetail('${work.id}')">
-                <div class="leaderboard-rank ${rankClass}">${medal}</div>
-                <img src="${work.img}" class="leaderboard-img" onerror="this.src='https://picsum.photos/200/200?random=1'">
-                <div class="leaderboard-content">
-                  <div class="leaderboard-title">${work.title}</div>
-                  <div class="leaderboard-author">作者：${work.author}</div>
-                  <div class="leaderboard-stats">👁 ${work.views} 次浏览 · 💬 ${work.comments.length} 条评论</div>
-                </div>
-                <div class="leaderboard-likes">
-                  <div class="likes-number">❤️ ${work.likes}</div>
-                  <div class="likes-label">点赞数</div>
-                </div>
-              </div>
-            `;
+                  <div class="leaderboard-item" onclick="showDetail(${work.id})">
+                    <div class="leaderboard-rank ${rankClass}">${medal}</div>
+                    <img src="${work.img}" class="leaderboard-img" onerror="this.src='https://picsum.photos/80/80'">
+                    <div class="leaderboard-content">
+                      <div class="leaderboard-title">${work.title}</div>
+                      <div class="leaderboard-author">作者：${work.author}</div>
+                      <div class="leaderboard-stats">👁 浏览量 · 💬 云端评论</div>
+                    </div>
+                    <div class="leaderboard-likes">
+                      <div class="likes-number">❤️ ${work.likes}</div>
+                      <div class="likes-label">染色次数</div>
+                    </div>
+                  </div>
+                `;
             }).join('');
         }
 
+        // 显示详情
         function showDetail(workId) {
             const work = allWorks.find(w => w.id === workId);
             if (!work) return;
@@ -469,37 +472,23 @@
             document.getElementById('modalImg').src = work.img;
 
             document.getElementById('modalInfo').innerHTML = `
-            <div class="modal-info-item">
-              <span>作者</span>
-              <span>${work.author}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>点赞数</span>
-              <span>${work.likes}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>浏览量</span>
-              <span>${work.views}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>发布时间</span>
-              <span>${new Date(work.time).toLocaleString()}</span>
-            </div>
-          `;
-
-            const commentsHtml = work.comments.length > 0
-                ? work.comments.map(c => `
-                <div class="modal-comment-item">
-                  <strong>${c.author}:</strong> ${c.text}
-                  <div style="font-size:12px;color:#a87f61;margin-top:5px;">${new Date(c.time).toLocaleString()}</div>
+                <div class="modal-info-item">
+                  <span>素材ID</span>
+                  <span>${work.id}</span>
                 </div>
-              `).join('')
-                : '<div style="color:#a87f61;text-align:center;">暂无评论</div>';
+                <div class="modal-info-item">
+                  <span>染色次数</span>
+                  <span>${work.likes}</span>
+                </div>
+                 <div class="modal-info-item">
+                  <span>来源</span>
+                  <span>云端数据库</span>
+                </div>
+              `;
 
             document.getElementById('modalComments').innerHTML = `
-            <h4 style="color:#8c5c3b;margin-bottom:10px;">评论 (${work.comments.length})</h4>
-            ${commentsHtml}
-          `;
+                <h4 style="color:#8c5c3b;">评论数据已同步到云端</h4>
+              `;
 
             document.getElementById('detailModal').classList.add('show');
         }
@@ -510,9 +499,15 @@
             }
         }
 
+        // 权限验证 + 自动加载
         window.onload = function () {
+            const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+            if (!user || user.role !== "admin") {
+                alert("无权限");
+                window.location.href = "login.html";
+                return;
+            }
             loadLeaderboard();
-            setInterval(loadLeaderboard, 30000);
         };
     </script>
     <script src="ai-chat.js"></script>

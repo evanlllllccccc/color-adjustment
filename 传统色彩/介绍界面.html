@@ -9,30 +9,56 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft Yahei", sans-serif;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
         }
 
         body {
             background-color: #fdfbf7;
-            color: #333;
+            color: #3e2e23;
             line-height: 1.7;
             padding: 40px 20px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e6d5c3;
         }
 
         h1 {
-            font-size: 28px;
-            color: #8c5c44;
-            margin-bottom: 20px;
+            font-size: 32px;
+            color: #8c5c3b;
+            margin-bottom: 15px;
             text-align: center;
+            border-bottom: 2px solid #f0e6d6;
+            padding-bottom: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a87f61;
+            margin-bottom: 35px;
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #7a513c;
+            margin: 30px 0 15px;
+            padding-left: 12px;
+            border-left: 5px solid #b17a54;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: #8c5c3b;
+            margin: 20px 0 10px;
+            font-weight: 600;
         }
 
         p {
@@ -41,37 +67,172 @@
             text-align: justify;
         }
 
+        ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: #fffaf5;
+            border: 1px solid #e2c9b8;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+            .feature-card h4 {
+                color: #b17a54;
+                margin-bottom: 10px;
+                font-size: 18px;
+                border-bottom: 1px dashed #d4b2a2;
+                padding-bottom: 6px;
+            }
+
+        .badge {
+            display: inline-block;
+            background: #b17a54;
+            color: white;
+            font-size: 13px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-right: 8px;
+        }
+
         .back {
             display: inline-block;
-            margin-top: 30px;
-            padding: 10px 20px;
-            background: #8c5c44;
+            margin-top: 35px;
+            padding: 12px 28px;
+            background: #8c5c3b;
             color: white;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: 0.3s;
+            border: none;
+            box-shadow: 0 2px 8px rgba(140, 92, 59, 0.2);
         }
 
             .back:hover {
                 background: #704a36;
+                transform: translateY(-2px);
             }
+
+        .highlight {
+            color: #b17a54;
+            font-weight: bold;
+        }
+
+        hr {
+            margin: 30px 0 10px;
+            border: none;
+            border-top: 1px solid #e6d5c3;
+        }
+
+        .tech-note {
+            background: #f5ede2;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #5a3c2c;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>传统色彩数字工坊 · 项目介绍</h1>
+        <h1>🎨 传统色彩数字工坊</h1>
+        <div class="subtitle">探寻东方色彩之美 · 数字化传承与创新平台</div>
 
-        <p>传统色彩数字工坊是一个致力于保护、传承与推广中国传统色彩文化的数字化平台。我们收录了历代经典传统色彩，包括名称、色值、文化典故与应用场景，让东方美学以现代方式呈现。</p>
+        <p><strong>传统色彩数字工坊</strong>是一个集色彩文化展示、在线染色创作、用户社交互动与数据管理于一体的综合性平台。我们收录了数百种中国传统色，结合现代 Web 技术，让用户能够在线体验「区域染色」的乐趣，同时为管理员提供全方位的后台管理工具。</p>
 
-        <p>本项目通过数字化技术，让传统色彩不再只存在于古籍与文物中，而是成为人人可查阅、可使用、可创作的设计资源。</p>
+        <h2>📌 平台核心特色</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🎴 传统色基因库</h4>
+                <p>内置红、橙、黄、绿、青、蓝、紫、白、黑、褐十大色系，每个颜色均标注名称与十六进制色值，并支持个人调色盘保存自定义颜色。</p>
+            </div>
+            <div class="feature-card">
+                <h4>🖌️ 智能区域染色</h4>
+                <p>基于 Canvas 的泛洪填充算法，点击画布封闭区域即可一键上色。支持色相、饱和度、亮度、透明度及容差实时调节，还原真实染色体验。</p>
+            </div>
+            <div class="feature-card">
+                <h4>☁️ 云端数据同步</h4>
+                <p>所有用户作品、草稿、素材、评论点赞及私信均通过后端 API 持久化存储。登录后数据自动同步，更换设备也能继续创作。</p>
+            </div>
+            <div class="feature-card">
+                <h4>🤖 AI 辅助功能</h4>
+                <p>管理员端集成 AI 标签推荐，可对上传素材自动生成分类标签；未来还将扩展 AI 色彩搭配建议与作品评分系统。</p>
+            </div>
+        </div>
 
-        <p>平台包含传统色图鉴、染色工坊、色彩科普、文化展示等多个模块，适合设计爱好者、文化研究者、学生及大众用户使用。</p>
+        <h2>🧑‍🎨 游客与用户功能</h2>
+        <h3><span class="badge">游客模式</span> 无需注册，即刻浏览</h3>
+        <ul>
+            <li>查看热门染色作品（按点赞数排序），欣赏优秀创作。</li>
+            <li>访问作品库、排行榜、项目介绍，了解平台全貌。</li>
+            <li>体验染色工坊基础功能（部分高级功能需登录）。</li>
+        </ul>
 
-        <p>我们希望通过科技，让传统色彩重新走进当代生活，让东方之美被更多人看见与传承。</p>
+        <h3><span class="badge">注册用户</span> 解锁完整创作工具</h3>
+        <ul>
+            <li><strong>个人中心</strong>：管理头像、简介，查看作品/草稿/获赞/评论/私信，统计数据（作品数、总点赞、浏览量）一目了然。</li>
+            <li><strong>染色工坊</strong>：上传本地图片或使用管理员预设素材，自由染色后支持导出 PNG、保存至云端作品库或存为草稿继续编辑。</li>
+            <li><strong>作品库</strong>：发布公开作品，其他用户可点赞、评论，并可通过私信交流创作心得。</li>
+            <li><strong>排行榜</strong>：综合点赞与浏览量生成热度排名，激励创作者持续产出优质内容。</li>
+            <li><strong>私信系统</strong>：与任何用户一对一聊天，收到评论或点赞时可快速回复，未读消息有红点提示。</li>
+        </ul>
+
+        <h2>🛠️ 管理员后台系统</h2>
+        <p>平台为管理员提供独立的后台界面，需通过管理员账号登录。主要模块包括：</p>
+        <ul>
+            <li><strong>数据统计看板</strong>：实时展示用户总数、今日新增、浏览量、染色次数、作品总量等核心运营指标，支持一键刷新。</li>
+            <li><strong>用户作品库管理</strong>：查看所有用户发布的作品，支持按热度/时间排序、关键词搜索，并可删除违规作品。</li>
+            <li><strong>评论监管</strong>：集中查看全站评论，对不当言论进行删除处理，维护社区氛围。</li>
+            <li><strong>素材管理</strong>：上传公共染色底图（预设素材），设置名称与分类，用户即可在染色工坊中选用。支持 AI 辅助生成分类标签。</li>
+            <li><strong>热度排行</strong>：多维度展示作品热度，便于分析内容趋势。</li>
+        </ul>
+
+        <h2>🌈 技术实现亮点</h2>
+        <ul>
+            <li><strong>前端</strong>：原生 HTML/CSS/JavaScript，响应式布局，适配 PC 与移动端；Canvas 实现图像处理与泛洪填充算法。</li>
+            <li><strong>后端对接</strong>：所有数据接口统一使用 RESTful API，通过 Bearer Token 进行身份验证，确保数据安全。</li>
+            <li><strong>数据持久化</strong>：用户作品、草稿、素材、评论、点赞、私信等全部存储于云端数据库，替代传统 localStorage 方案，实现真正的多端同步。</li>
+            <li><strong>用户体验</strong>：模拟传统染色工坊的交互流程，提供撤销、重命名、导出等实用工具，降低创作门槛。</li>
+        </ul>
+
+        <h2>📖 文化传承意义</h2>
+        <p>中国传统色彩是东方美学的重要载体，每一种颜色背后都蕴藏着诗词典故与工艺智慧。本项目通过数字化手段，将“胭脂”“黛蓝”“秋香”等雅致色名与具体色值关联，让用户在创作中感受色彩背后的文化温度。无论是专业设计师寻找配色灵感，还是普通爱好者体验传统染色工艺，都能在这里找到属于自己的东方色彩。</p>
+
+        <div class="tech-note">
+            <strong>🔗 项目架构说明</strong><br>
+            · 前端页面：主界面、染色工坊、作品库、排行榜、登录/注册、个人中心、游客界面、介绍界面。<br>
+            · 管理员端：主界面、数据统计、评论监管、素材管理、作品库、排行榜、AI评分（预留）。<br>
+            · 后端 API 基础地址：<code>https://color-adjustment-production.up.railway.app</code> （已全面对接）。
+        </div>
+
+        <hr>
+        <p style="text-align: center; color: #7a513c; margin-top: 20px;">
+            我们相信，科技能让传统色彩焕发新生。<br>
+            欢迎加入「传统色彩数字工坊」，一起描绘东方色谱。
+        </p>
 
         <!-- 返回主界面按钮 -->
-        <a href="主界面.html" class="back">← 返回主界面</a>
+        <div style="text-align: center;">
+            <a href="主界面.html" class="back">← 返回主界面</a>
+        </div>
     </div>
 
-<script src="ai-chat.js"></script>
+    <!-- 可选的 AI 聊天脚本，保留但不影响介绍页 -->
+    <!-- <script src="ai-chat.js"></script> -->
 </body>
 </html>

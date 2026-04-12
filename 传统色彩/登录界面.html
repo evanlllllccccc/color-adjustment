@@ -96,7 +96,6 @@
             margin-top: 12px;
         }
 
-        /* 注册弹窗 */
         .modal {
             position: fixed;
             top: 0;
@@ -159,7 +158,6 @@
         <button class="btn btn-guest" onclick="goGuest()">游客进入</button>
     </div>
 
-    <!-- 注册弹窗 -->
     <div class="modal" id="regModal">
         <div class="modal-card">
             <div class="close-modal" onclick="hideRegister()">关闭 ×</div>
@@ -179,17 +177,20 @@
     </div>
 
     <script>
-        // 显示注册
+        // 后端地址（你的云端服务器）
+        const API = "https://color-adjustment-production.up.railway.app";
+
         function showRegister() {
             document.getElementById("regModal").classList.add("show");
         }
-        // 隐藏注册
         function hideRegister() {
             document.getElementById("regModal").classList.remove("show");
         }
 
-        // 注册
-        function doRegister() {
+        // ==========================================
+        // 注册（保存到云端数据库）
+        // ==========================================
+        async function doRegister() {
             let account = document.getElementById("regAccount").value.trim();
             let pwd = document.getElementById("regPwd").value.trim();
 
@@ -198,23 +199,30 @@
                 return;
             }
 
-            let users = JSON.parse(localStorage.getItem("users") || "[]");
-            let exists = users.some(u => u.account === account);
+            try {
+                let res = await fetch(API + "/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: account, password: pwd })
+                });
 
-            if (exists) {
-                alert("该账号已注册");
-                return;
+                let result = await res.json();
+
+                if (result.success) {
+                    alert("注册成功！请登录");
+                    hideRegister();
+                } else {
+                    alert(result.msg || "注册失败，账号已存在");
+                }
+            } catch (e) {
+                alert("注册失败，请检查网络");
             }
-
-            users.push({ account, pwd });
-            localStorage.setItem("users", JSON.stringify(users));
-
-            alert("注册成功！请登录");
-            hideRegister();
         }
 
-        // 登录 
-        function goLogin() {
+        // ==========================================
+        // 登录（验证云端数据库）
+        // ==========================================
+        async function goLogin() {
             let account = document.getElementById("loginAccount").value.trim();
             let pwd = document.getElementById("loginPwd").value.trim();
 
@@ -223,35 +231,50 @@
                 return;
             }
 
-            // 1. 先判断是不是管理员（固定账号）
-            if (account === "admin" && pwd === "admin123") {
-                let adminUser = {
-                    account: "admin",
-                    pwd: "admin123",
-                    role: "admin" // 标记管理员角色
-                };
-                localStorage.setItem("currentUser", JSON.stringify(adminUser));
-                alert("管理员登录成功！");
-                location.href = "管理员界面.html"; // 跳转到管理页
-                return;
-            }
+            try {
+                let res = await fetch(API + "/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: account, password: pwd })
+                });
 
-            // 2. 普通用户登录逻辑（不变）
-            let users = JSON.parse(localStorage.getItem("users") || "[]");
-            let user = users.find(u => u.account === account && u.pwd === pwd);
-            if (!user) {
-                alert("账号或密码错误");
-                return;
+                let result = await res.json();
+
+                if (!result.success) {
+                    alert("账号或密码错误");
+                    return;
+                }
+
+                // 登录成功，保存用户信息
+                let user = result.user;
+                localStorage.setItem("currentUser", JSON.stringify(user));
+
+                alert("登录成功：" + user.username);
+
+                if (user.role === "admin") {
+                    location.href = "管理员界面.html";
+                } else {
+                    location.href = "主界面.html";
+                }
+
+            } catch (e) {
+                alert("登录失败，请检查网络");
             }
-            user.role = "user"; // 普通用户角色
-            localStorage.setItem("currentUser", JSON.stringify(user));
-            alert("登录成功：" + user.account);
-            location.href = "主界面.html";
         }
 
-        // 游客
-        function goGuest() {
-            location.href = "游客界面.html";
+        // ==========================================
+        // 游客登录
+        // ==========================================
+        async function goGuest() {
+            let res = await fetch(API + "/api/guest", { method: "POST" });
+            let result = await res.json();
+            if (result.success) {
+                localStorage.setItem("currentUser", JSON.stringify({
+                    userId: 0,
+                    username: "游客"
+                }));
+                location.href = "游客界面.html";
+            }
         }
     </script>
 

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>个人中心 - 传统色彩数字工坊</title>
+    <title>个人中心 · 传统色彩数字工坊</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -94,6 +94,7 @@
             margin-bottom: 12px;
             cursor: pointer;
             transition: 0.3s;
+            background: #f0e6d6;
         }
 
             .avatar:hover {
@@ -112,6 +113,13 @@
             font-size: 14px;
             color: #a87f61;
             word-break: break-all;
+            cursor: pointer;
+        }
+
+        .avatar-hint {
+            font-size: 12px;
+            color: #a87f61;
+            margin-top: 5px;
         }
 
         .menu {
@@ -194,6 +202,7 @@
             height: 130px;
             object-fit: cover;
             cursor: pointer;
+            background: #f5ede2;
         }
 
         .work-info {
@@ -306,7 +315,6 @@
                 background: #9a6843;
             }
 
-        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -367,13 +375,6 @@
             color: #7a513c;
         }
 
-        /* 头像上传提示 */
-        .avatar-hint {
-            font-size: 12px;
-            color: #a87f61;
-            margin-top: 5px;
-        }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -401,7 +402,6 @@
             margin-top: 5px;
         }
 
-        /* 私信列表样式 */
         .chat-list {
             display: flex;
             flex-direction: column;
@@ -454,7 +454,6 @@
             border-radius: 10px;
         }
 
-        /* 聊天窗口 */
         .chat-window {
             display: none;
             flex-direction: column;
@@ -513,10 +512,20 @@
             cursor: pointer;
             color: #7a513c;
         }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid #c95a5a;
+            color: #c95a5a;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-left: 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-
     <header>
         <div class="logo">传统色彩数字工坊</div>
         <nav class="nav-links">
@@ -525,6 +534,7 @@
             <a href="gallery.html">作品库</a>
             <a href="rank.html">排行榜</a>
             <a href="login.html" class="active">个人中心</a>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
         </nav>
     </header>
 
@@ -534,7 +544,7 @@
                 <img src="https://picsum.photos/200/200?random=10" class="avatar" id="userAvatar" onclick="uploadAvatar()">
                 <div class="avatar-hint">点击更换头像</div>
                 <div class="username" id="showUsername">加载中...</div>
-                <div class="intro" id="userIntro">点击编辑简介...</div>
+                <div class="intro" id="userIntro" onclick="openIntroModal()">点击编辑简介...</div>
                 <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarChange(event)">
             </div>
             <div class="menu">
@@ -609,9 +619,7 @@
             <!-- 私信交流 -->
             <div class="panel" id="messages" style="display:none;">
                 <div class="panel-title">私信交流</div>
-                <div class="chat-list" id="chatList">
-                    <!-- 私信列表 -->
-                </div>
+                <div class="chat-list" id="chatList"></div>
                 <div class="chat-window" id="chatWindow">
                     <button class="back-btn" onclick="backToChatList()">← 返回列表</button>
                     <div class="chat-messages" id="chatMessages"></div>
@@ -649,502 +657,382 @@
     </div>
 
     <script>
-        let currentUser = null;
-        let currentEditingWork = null;
-        let currentChatUser = null;
+        (function () {
+            // ---------- 后端配置 ----------
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            // 全局状态
+            let currentUser = null;           // 当前用户信息 { id, username, account, avatar, intro, ... }
+            let authToken = localStorage.getItem('authToken');
+            let currentEditingWorkId = null;
+            let currentChatUser = null;
 
-        // 初始化
-        window.onload = function () {
-            loadUserData();
-            updateUI();
-        };
-
-        // 加载用户数据
-        function loadUserData() {
-            const userData = localStorage.getItem("currentUser");
-            if (userData) {
-                try {
-                    currentUser = JSON.parse(userData);
-                    // 加载用户详细信息
-                    const userDetails = JSON.parse(localStorage.getItem("userDetails_" + currentUser.account) || "{}");
-                    currentUser.avatar = userDetails.avatar || currentUser.avatar || "https://picsum.photos/200/200?random=10";
-                    currentUser.intro = userDetails.intro || "醉心传统染色，传承东方色彩";
-                } catch (e) {
-                    console.error("加载用户数据失败", e);
+            // ---------- 通用请求封装 ----------
+            async function apiRequest(endpoint, options = {}) {
+                if (!authToken) {
+                    // 未登录则跳转登录页
+                    if (!window.location.pathname.includes('login.html')) {
+                        window.location.href = 'login.html';
+                    }
+                    throw new Error('未登录');
                 }
-            }
-        }
-
-        // 更新UI
-        function updateUI() {
-            if (!currentUser) {
-                document.getElementById("showUsername").innerText = "未登录";
-                document.getElementById("showNickname").innerText = "未登录";
-                document.getElementById("userIntro").innerText = "请先登录";
-                return;
-            }
-
-            document.getElementById("showUsername").innerText = currentUser.account;
-            document.getElementById("showNickname").innerText = currentUser.account;
-            document.getElementById("userIntro").innerText = currentUser.intro;
-            document.getElementById("showIntro").innerText = currentUser.intro;
-            document.getElementById("userAvatar").src = currentUser.avatar;
-
-            updateStats();
-            loadWorks();
-            loadDrafts();
-            loadComments();
-            loadLikes();
-            loadMessages();
-        }
-
-        // 更新统计数据
-        function updateStats() {
-            // 统计所有注册用户（包括没有作品的）
-            let userCount = 0;
-            for (let key in localStorage) {
-                if (key.startsWith("user_") || key.startsWith("userDetails_")) {
-                    userCount++;
-                }
-            }
-            // 如果没有user_开头的键，就统计currentUser
-            if (userCount === 0 && localStorage.getItem("currentUser")) {
-                userCount = 1;
-            }
-
-            // 统计作品数
-            let workCount = 0;
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    const works = JSON.parse(localStorage.getItem(key) || "[]");
-                    workCount += works.length;
-                }
-            }
-
-            document.getElementById("totalUsers").innerText = userCount || 1;
-            document.getElementById("totalWorks").innerText = workCount;
-
-            // 今日访问
-            const today = new Date().toDateString();
-            const visitKey = "visits_" + today;
-            const visits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
-            localStorage.setItem(visitKey, visits);
-            document.getElementById("todayVisits").innerText = visits;
-        }
-
-        // 切换标签
-        function switchTab(tab) {
-            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-            document.querySelectorAll('.panel').forEach(panel => panel.style.display = 'none');
-            document.getElementById(tab).style.display = 'block';
-
-            if (tab === 'works') loadWorks();
-            if (tab === 'drafts') loadDrafts();
-            if (tab === 'comments') loadComments();
-            if (tab === 'likes') loadLikes();
-            if (tab === 'messages') loadMessages();
-        }
-
-        // ========== 头像上传 ==========
-        function uploadAvatar() {
-            document.getElementById('avatarInput').click();
-        }
-
-        function handleAvatarChange(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-                alert('请选择图片文件');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = new Image();
-                img.onload = function () {
-                    // 压缩头像
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const size = Math.min(img.width, img.height, 300);
-                    canvas.width = size;
-                    canvas.height = size;
-
-                    // 居中裁剪
-                    const offsetX = (img.width - size) / 2;
-                    const offsetY = (img.height - size) / 2;
-                    ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
-
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-                    // 保存
-                    currentUser.avatar = compressedDataUrl;
-                    localStorage.setItem("userDetails_" + currentUser.account, JSON.stringify({
-                        avatar: compressedDataUrl,
-                        intro: currentUser.intro
-                    }));
-
-                    document.getElementById('userAvatar').src = compressedDataUrl;
-                    alert('头像更新成功！');
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
                 };
-                img.src = e.target.result;
+                // 如果是FormData则不设置Content-Type
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'login.html';
+                    throw new Error('登录已过期');
+                }
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(`请求失败: ${response.status} ${err}`);
+                }
+                return await response.json();
+            }
+
+            // 登出
+            window.logout = function () {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
             };
-            reader.readAsDataURL(file);
-        }
 
-        // ========== 简介编辑 ==========
-        document.getElementById('userIntro').onclick = function () {
-            if (!currentUser) return;
-            document.getElementById('editIntroText').value = currentUser.intro;
-            document.getElementById('introModal').style.display = 'flex';
-        };
+            // 打开简介编辑框
+            window.openIntroModal = function () {
+                if (!currentUser) return;
+                document.getElementById('editIntroText').value = currentUser.intro || '';
+                document.getElementById('introModal').style.display = 'flex';
+            };
+            window.closeIntroModal = function () {
+                document.getElementById('introModal').style.display = 'none';
+            };
+            window.confirmEditIntro = async function () {
+                const newIntro = document.getElementById('editIntroText').value.trim();
+                if (!newIntro) { alert('简介不能为空'); return; }
+                try {
+                    await apiRequest('/api/users/profile', {
+                        method: 'PATCH',
+                        body: JSON.stringify({ intro: newIntro })
+                    });
+                    currentUser.intro = newIntro;
+                    document.getElementById('userIntro').innerText = newIntro;
+                    document.getElementById('showIntro').innerText = newIntro;
+                    closeIntroModal();
+                    alert('简介更新成功');
+                } catch (e) { alert('更新失败: ' + e.message); }
+            };
 
-        function closeIntroModal() {
-            document.getElementById('introModal').style.display = 'none';
-        }
-
-        function confirmEditIntro() {
-            const newIntro = document.getElementById('editIntroText').value.trim();
-            if (!newIntro) {
-                alert('简介不能为空');
-                return;
-            }
-
-            currentUser.intro = newIntro;
-            localStorage.setItem("userDetails_" + currentUser.account, JSON.stringify({
-                avatar: currentUser.avatar,
-                intro: newIntro
-            }));
-
-            document.getElementById('userIntro').innerText = newIntro;
-            document.getElementById('showIntro').innerText = newIntro;
-            closeIntroModal();
-            alert('简介更新成功！');
-        }
-
-        // ========== 作品管理 ==========
-        function loadWorks() {
-            if (!currentUser) return;
-
-            const works = JSON.parse(localStorage.getItem("myWorks_" + currentUser.account) || "[]");
-            const grid = document.getElementById('worksGrid');
-
-            if (works.length === 0) {
-                grid.innerHTML = '<div class="empty">暂无作品，快去染色工坊创作吧～</div>';
-                return;
-            }
-
-            grid.innerHTML = works.map((work, index) => `
-          <div class="work-card">
-            <img src="${work.img}" class="work-img" onclick="viewWork(${index})" alt="${work.title}">
-            <div class="work-info">
-              <div class="work-name" onclick="viewWork(${index})">${work.title}</div>
-              <div class="work-data">
-                <span>👁 ${work.views || 0}</span>
-                <span>👍 ${work.likes || 0}</span>
-              </div>
-              <div class="work-actions">
-                <button class="btn-small btn-edit" onclick="editWorkName(${index})">重命名</button>
-                <button class="btn-small btn-delete" onclick="deleteWork(${index})">删除</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-        }
-
-        function viewWork(index) {
-            const works = JSON.parse(localStorage.getItem("myWorks_" + currentUser.account) || "[]");
-            const work = works[index];
-            // 增加浏览量
-            work.views = (work.views || 0) + 1;
-            works[index] = work;
-            localStorage.setItem("myWorks_" + currentUser.account, JSON.stringify(works));
-
-            // 在新标签页打开查看
-            const win = window.open('', '_blank');
-            win.document.write(`
-          <html>
-            <head><title>${work.title}</title></head>
-            <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f8f3e9;">
-              <img src="${work.img}" style="max-width:90%; max-height:90vh; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
-            </body>
-          </html>
-        `);
-            updateStats();
-            loadWorks();
-        }
-
-        function editWorkName(index) {
-            const works = JSON.parse(localStorage.getItem("myWorks_" + currentUser.account) || "[]");
-            currentEditingWork = index;
-            document.getElementById('editWorkName').value = works[index].title;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-            currentEditingWork = null;
-        }
-
-        function confirmEditWork() {
-            const newName = document.getElementById('editWorkName').value.trim();
-            if (!newName) {
-                alert('名称不能为空');
-                return;
-            }
-
-            const works = JSON.parse(localStorage.getItem("myWorks_" + currentUser.account) || "[]");
-            works[currentEditingWork].title = newName;
-            localStorage.setItem("myWorks_" + currentUser.account, JSON.stringify(works));
-
-            closeEditModal();
-            loadWorks();
-            alert('作品名称已更新！');
-        }
-
-        function deleteWork(index) {
-            if (!confirm('确定要删除这个作品吗？')) return;
-
-            const works = JSON.parse(localStorage.getItem("myWorks_" + currentUser.account) || "[]");
-            works.splice(index, 1);
-            localStorage.setItem("myWorks_" + currentUser.account, JSON.stringify(works));
-
-            loadWorks();
-            updateStats();
-            alert('作品已删除');
-        }
-
-        // ========== 草稿管理 ==========
-        function loadDrafts() {
-            if (!currentUser) return;
-
-            const drafts = JSON.parse(localStorage.getItem("drafts_" + currentUser.account) || "[]");
-            const grid = document.getElementById('draftsGrid');
-
-            if (drafts.length === 0) {
-                grid.innerHTML = '<div class="empty">暂无草稿，在染色工坊点击"保存草稿"可创建</div>';
-                return;
-            }
-
-            grid.innerHTML = drafts.map((draft, index) => `
-          <div class="work-card">
-            <img src="${draft.img}" class="work-img" alt="${draft.title}">
-            <div class="work-info">
-              <div class="work-name">${draft.title}</div>
-              <div class="work-data">
-                <span>💾 草稿</span>
-                <span>${new Date(draft.time).toLocaleDateString()}</span>
-              </div>
-              <div class="work-actions">
-                <button class="btn-small btn-edit" onclick="continueDraft(${index})">继续编辑</button>
-                <button class="btn-small btn-delete" onclick="deleteDraft(${index})">删除</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-        }
-
-        function continueDraft(index) {
-            const drafts = JSON.parse(localStorage.getItem("drafts_" + currentUser.account) || "[]");
-            const draft = drafts[index];
-
-            // 将草稿数据传递到染色工坊
-            localStorage.setItem("currentDraft", JSON.stringify(draft));
-            window.location.href = "dye-workshop.html?mode=draft";
-        }
-
-        function deleteDraft(index) {
-            if (!confirm('确定删除此草稿吗？')) return;
-            const drafts = JSON.parse(localStorage.getItem("drafts_" + currentUser.account) || "[]");
-            drafts.splice(index, 1);
-            localStorage.setItem("drafts_" + currentUser.account, JSON.stringify(drafts));
-            loadDrafts();
-        }
-
-        // ========== 评论管理 ==========
-        function loadComments() {
-            if (!currentUser) return;
-
-            const allComments = JSON.parse(localStorage.getItem("allComments") || "[]");
-            const myComments = allComments.filter(c => c.toUser === currentUser.account);
-
-            const list = document.getElementById('commentsList');
-            if (myComments.length === 0) {
-                list.innerHTML = '<div class="empty">暂无评论</div>';
-                return;
-            }
-
-            list.innerHTML = myComments.map(comment => `
-          <div class="item">
-            <div class="item-title">
-              <span>${comment.fromUser} 评论了 《${comment.workTitle}》</span>
-              <span style="font-size:12px; color:#a87f61;">${new Date(comment.time).toLocaleString()}</span>
-            </div>
-            <div class="item-content">${comment.content}</div>
-            <div style="margin-top:8px;">
-              <button class="btn-small btn-edit" onclick="replyComment('${comment.fromUser}', '${comment.workTitle}')">回复</button>
-            </div>
-          </div>
-        `).join('');
-        }
-
-        function replyComment(toUser, workTitle) {
-            const reply = prompt(`回复 ${toUser}:`);
-            if (!reply) return;
-
-            // 发送私信回复
-            sendDirectMessage(toUser, `回复你对《${workTitle}》的评论: ${reply}`);
-            alert('回复已发送为私信');
-        }
-
-        // ========== 点赞管理 ==========
-        function loadLikes() {
-            if (!currentUser) return;
-
-            const allLikes = JSON.parse(localStorage.getItem("allLikes") || "[]");
-            const myLikes = allLikes.filter(l => l.toUser === currentUser.account);
-
-            const list = document.getElementById('likesList');
-            if (myLikes.length === 0) {
-                list.innerHTML = '<div class="empty">暂无点赞记录</div>';
-                return;
-            }
-
-            list.innerHTML = myLikes.map(like => `
-          <div class="item">
-            <div class="item-title">
-              <span>${like.fromUser} 赞了你的作品 《${like.workTitle}》 ❤️</span>
-              <span style="font-size:12px; color:#a87f61;">${new Date(like.time).toLocaleString()}</span>
-            </div>
-          </div>
-        `).join('');
-        }
-
-        // ========== 私信系统 ==========
-        function loadMessages() {
-            if (!currentUser) return;
-
-            const allMessages = JSON.parse(localStorage.getItem("allMessages") || "[]");
-            const myMessages = allMessages.filter(m =>
-                m.from === currentUser.account || m.to === currentUser.account
-            );
-
-            // 按用户分组
-            const chatGroups = {};
-            myMessages.forEach(msg => {
-                const otherUser = msg.from === currentUser.account ? msg.to : msg.from;
-                if (!chatGroups[otherUser]) {
-                    chatGroups[otherUser] = [];
+            // 加载当前用户信息
+            async function fetchUserProfile() {
+                try {
+                    const data = await apiRequest('/api/users/me');
+                    // 假设返回 { id, username, account, avatar, intro, ... }
+                    currentUser = data.user || data;
+                    // 缓存部分信息
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateUserUI();
+                } catch (e) {
+                    console.error('获取用户信息失败', e);
+                    document.getElementById('showUsername').innerText = '未登录';
                 }
-                chatGroups[otherUser].push(msg);
-            });
-
-            const chatList = document.getElementById('chatList');
-            const chatWindow = document.getElementById('chatWindow');
-
-            if (Object.keys(chatGroups).length === 0) {
-                chatList.innerHTML = '<div class="empty">暂无私信，在作品库中可以与其他用户交流</div>';
-                chatList.style.display = 'block';
-                chatWindow.style.display = 'none';
-                return;
             }
 
-            chatList.innerHTML = Object.entries(chatGroups).map(([user, messages]) => {
-                const lastMsg = messages[messages.length - 1];
-                const unread = messages.filter(m => m.to === currentUser.account && !m.read).length;
+            function updateUserUI() {
+                if (!currentUser) return;
+                document.getElementById('showUsername').innerText = currentUser.account || currentUser.username;
+                document.getElementById('showNickname').innerText = currentUser.account || currentUser.username;
+                document.getElementById('userIntro').innerText = currentUser.intro || '点击编辑简介...';
+                document.getElementById('showIntro').innerText = currentUser.intro || '暂无简介';
+                const avatarUrl = currentUser.avatar || 'https://picsum.photos/200/200?random=10';
+                document.getElementById('userAvatar').src = avatarUrl;
+            }
 
-                return `
-            <div class="chat-item" onclick="openChat('${user}')">
-              <div class="chat-header">
-                <span class="chat-user">${user}</span>
-                ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
-                <span class="chat-time">${new Date(lastMsg.time).toLocaleDateString()}</span>
-              </div>
-              <div class="chat-preview">${lastMsg.content}</div>
-            </div>
-          `;
-            }).join('');
+            // 统计数据 (作品数/获赞/浏览量)
+            async function loadStats() {
+                try {
+                    const stats = await apiRequest('/api/users/me/stats');
+                    document.getElementById('statWorks').innerText = stats.workCount || 0;
+                    document.getElementById('statLikes').innerText = stats.totalLikes || 0;
+                    document.getElementById('statViews').innerText = stats.totalViews || 0;
+                } catch (e) { /* 忽略 */ }
+            }
 
-            chatList.style.display = 'block';
-            chatWindow.style.display = 'none';
-        }
+            // 切换标签
+            window.switchTab = function (tab) {
+                document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+                document.querySelectorAll('.panel').forEach(panel => panel.style.display = 'none');
+                document.getElementById(tab).style.display = 'block';
 
-        function openChat(user) {
-            currentChatUser = user;
-            document.getElementById('chatList').style.display = 'none';
-            document.getElementById('chatWindow').style.display = 'flex';
+                if (tab === 'home') loadStats();
+                if (tab === 'works') loadWorks();
+                if (tab === 'drafts') loadDrafts();
+                if (tab === 'comments') loadComments();
+                if (tab === 'likes') loadLikes();
+                if (tab === 'messages') loadMessages();
+            };
 
-            loadChatMessages(user);
-        }
+            // 头像上传
+            window.uploadAvatar = function () {
+                document.getElementById('avatarInput').click();
+            };
+            window.handleAvatarChange = async function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) { alert('请选择图片'); return; }
+                // 压缩处理
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const img = new Image();
+                    img.onload = async () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const size = Math.min(img.width, img.height, 400);
+                        canvas.width = size; canvas.height = size;
+                        const offsetX = (img.width - size) / 2, offsetY = (img.height - size) / 2;
+                        ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+                        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+                        const formData = new FormData();
+                        formData.append('avatar', blob, 'avatar.jpg');
+                        try {
+                            const res = await apiRequest('/api/users/avatar', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            currentUser.avatar = res.avatar || URL.createObjectURL(blob);
+                            updateUserUI();
+                            alert('头像更新成功');
+                        } catch (err) { alert('上传失败: ' + err.message); }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
 
-        function backToChatList() {
-            document.getElementById('chatList').style.display = 'flex';
-            document.getElementById('chatWindow').style.display = 'none';
-            currentChatUser = null;
-            loadMessages();
-        }
+            // ---------- 作品 ----------
+            window.loadWorks = async function () {
+                const grid = document.getElementById('worksGrid');
+                try {
+                    const data = await apiRequest('/api/works?my=1');
+                    const works = data.works || data || [];
+                    if (works.length === 0) {
+                        grid.innerHTML = '<div class="empty">暂无作品，快去染色工坊创作吧～</div>';
+                        return;
+                    }
+                    grid.innerHTML = works.map(work => `
+                        <div class="work-card">
+                            <img src="${work.imageUrl || work.img}" class="work-img" onclick="viewWork('${work.id}')" alt="${work.title}">
+                            <div class="work-info">
+                                <div class="work-name" onclick="viewWork('${work.id}')">${work.title}</div>
+                                <div class="work-data">
+                                    <span>👁 ${work.views || 0}</span>
+                                    <span>👍 ${work.likes || 0}</span>
+                                </div>
+                                <div class="work-actions">
+                                    <button class="btn-small btn-edit" onclick="editWorkName('${work.id}', '${work.title}')">重命名</button>
+                                    <button class="btn-small btn-delete" onclick="deleteWork('${work.id}')">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) { grid.innerHTML = '<div class="empty">加载失败，请刷新</div>'; }
+            };
 
-        function loadChatMessages(user) {
-            const allMessages = JSON.parse(localStorage.getItem("allMessages") || "[]");
-            const ourMessages = allMessages.filter(m =>
-                (m.from === currentUser.account && m.to === user) ||
-                (m.from === user && m.to === currentUser.account)
-            );
+            window.viewWork = async function (workId) {
+                try {
+                    await apiRequest(`/api/works/${workId}/view`, { method: 'POST' });
+                } catch (e) { }
+                // 新窗口打开大图
+                const work = await apiRequest(`/api/works/${workId}`);
+                const win = window.open('', '_blank');
+                win.document.write(`<body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f8f3e9;"><img src="${work.imageUrl || work.img}" style="max-width:90%;max-height:90vh;"></body>`);
+                loadStats();
+            };
 
-            const container = document.getElementById('chatMessages');
-            container.innerHTML = ourMessages.map(msg => `
-          <div class="message ${msg.from === currentUser.account ? 'sent' : 'received'}">
-            <div class="message-content">${msg.content}</div>
-            <div class="message-time">${new Date(msg.time).toLocaleString()}</div>
-          </div>
-        `).join('');
+            window.editWorkName = function (id, oldTitle) {
+                currentEditingWorkId = id;
+                document.getElementById('editWorkName').value = oldTitle;
+                document.getElementById('editModal').style.display = 'flex';
+            };
+            window.closeEditModal = () => document.getElementById('editModal').style.display = 'none';
+            window.confirmEditWork = async function () {
+                const newName = document.getElementById('editWorkName').value.trim();
+                if (!newName) { alert('名称不能为空'); return; }
+                try {
+                    await apiRequest(`/api/works/${currentEditingWorkId}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ title: newName })
+                    });
+                    closeEditModal();
+                    loadWorks();
+                    alert('名称已更新');
+                } catch (e) { alert('更新失败'); }
+            };
+            window.deleteWork = async function (id) {
+                if (!confirm('确定删除？')) return;
+                try {
+                    await apiRequest(`/api/works/${id}`, { method: 'DELETE' });
+                    loadWorks();
+                    loadStats();
+                } catch (e) { alert('删除失败'); }
+            };
 
-            // 标记已读
-            allMessages.forEach(m => {
-                if (m.from === user && m.to === currentUser.account) {
-                    m.read = true;
+            // 草稿
+            window.loadDrafts = async function () {
+                const grid = document.getElementById('draftsGrid');
+                try {
+                    const data = await apiRequest('/api/drafts');
+                    const drafts = data.drafts || data || [];
+                    if (!drafts.length) { grid.innerHTML = '<div class="empty">暂无草稿</div>'; return; }
+                    grid.innerHTML = drafts.map(d => `
+                        <div class="work-card">
+                            <img src="${d.imageUrl || d.img}" class="work-img">
+                            <div class="work-info">
+                                <div class="work-name">${d.title}</div>
+                                <div class="work-data"><span>💾草稿</span><span>${new Date(d.updatedAt).toLocaleDateString()}</span></div>
+                                <div class="work-actions">
+                                    <button class="btn-small btn-edit" onclick="continueDraft('${d.id}')">继续</button>
+                                    <button class="btn-small btn-delete" onclick="deleteDraft('${d.id}')">删除</button>
+                                </div>
+                            </div>
+                        </div>`).join('');
+                } catch (e) { grid.innerHTML = '<div class="empty">加载草稿失败</div>'; }
+            };
+            window.continueDraft = (id) => { window.location.href = `染色界面.html?draftId=${id}`; };
+            window.deleteDraft = async (id) => {
+                if (!confirm('删除草稿？')) return;
+                await apiRequest(`/api/drafts/${id}`, { method: 'DELETE' });
+                loadDrafts();
+            };
+
+            // 评论
+            window.loadComments = async function () {
+                const list = document.getElementById('commentsList');
+                try {
+                    const data = await apiRequest('/api/comments/received');
+                    const comments = data.comments || data || [];
+                    if (!comments.length) { list.innerHTML = '<div class="empty">暂无评论</div>'; return; }
+                    list.innerHTML = comments.map(c => `
+                        <div class="item">
+                            <div class="item-title"><span>${c.fromUser} 评论《${c.workTitle}》</span><span>${new Date(c.createdAt).toLocaleString()}</span></div>
+                            <div class="item-content">${c.content}</div>
+                            <div style="margin-top:8px;"><button class="btn-small btn-edit" onclick="replyComment('${c.fromUser}', '${c.workTitle}')">回复</button></div>
+                        </div>`).join('');
+                } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
+            };
+            window.replyComment = (toUser, workTitle) => {
+                const msg = prompt(`回复 ${toUser}:`);
+                if (!msg) return;
+                sendDirectMessage(toUser, `回复你对《${workTitle}》的评论: ${msg}`);
+                alert('回复已通过私信发送');
+            };
+
+            // 点赞
+            window.loadLikes = async function () {
+                const list = document.getElementById('likesList');
+                try {
+                    const data = await apiRequest('/api/likes/received');
+                    const likes = data.likes || data || [];
+                    if (!likes.length) { list.innerHTML = '<div class="empty">暂无点赞</div>'; return; }
+                    list.innerHTML = likes.map(l => `
+                        <div class="item"><div class="item-title"><span>${l.fromUser} 赞了《${l.workTitle}》❤️</span><span>${new Date(l.createdAt).toLocaleString()}</span></div></div>`).join('');
+                } catch (e) { }
+            };
+
+            // 私信
+            async function loadMessages() {
+                const chatListDiv = document.getElementById('chatList');
+                const chatWin = document.getElementById('chatWindow');
+                try {
+                    const data = await apiRequest('/api/messages/conversations');
+                    const convs = data.conversations || data || [];
+                    if (!convs.length) {
+                        chatListDiv.innerHTML = '<div class="empty">暂无私信</div>';
+                        chatListDiv.style.display = 'block';
+                        chatWin.style.display = 'none';
+                        return;
+                    }
+                    chatListDiv.innerHTML = convs.map(c => `
+                        <div class="chat-item" onclick="openChat('${c.withUser}')">
+                            <div class="chat-header"><span class="chat-user">${c.withUser}</span>${c.unread > 0 ? `<span class="unread-badge">${c.unread}</span>` : ''}<span class="chat-time">${new Date(c.lastTime).toLocaleDateString()}</span></div>
+                            <div class="chat-preview">${c.lastMessage}</div>
+                        </div>`).join('');
+                    chatListDiv.style.display = 'block';
+                    chatWin.style.display = 'none';
+                } catch (e) { }
+            }
+            window.loadMessages = loadMessages;
+
+            window.openChat = async function (user) {
+                currentChatUser = user;
+                document.getElementById('chatList').style.display = 'none';
+                document.getElementById('chatWindow').style.display = 'flex';
+                await loadChatMessages(user);
+            };
+            window.backToChatList = function () {
+                document.getElementById('chatList').style.display = 'block';
+                document.getElementById('chatWindow').style.display = 'none';
+                currentChatUser = null;
+                loadMessages();
+            };
+            async function loadChatMessages(withUser) {
+                const container = document.getElementById('chatMessages');
+                try {
+                    const data = await apiRequest(`/api/messages/with/${encodeURIComponent(withUser)}`);
+                    const msgs = data.messages || data || [];
+                    container.innerHTML = msgs.map(m => `
+                        <div class="message ${m.from === currentUser.account ? 'sent' : 'received'}">
+                            <div class="message-content">${m.content}</div>
+                            <div class="message-time">${new Date(m.createdAt).toLocaleString()}</div>
+                        </div>`).join('');
+                    container.scrollTop = container.scrollHeight;
+                } catch (e) { }
+            }
+            window.sendMessage = async function () {
+                const input = document.getElementById('messageInput');
+                const content = input.value.trim();
+                if (!content || !currentChatUser) return;
+                try {
+                    await apiRequest('/api/messages', {
+                        method: 'POST',
+                        body: JSON.stringify({ to: currentChatUser, content })
+                    });
+                    input.value = '';
+                    loadChatMessages(currentChatUser);
+                } catch (e) { alert('发送失败'); }
+            };
+            async function sendDirectMessage(toUser, content) {
+                await apiRequest('/api/messages', { method: 'POST', body: JSON.stringify({ to: toUser, content }) });
+            }
+            window.sendDirectMessage = sendDirectMessage;
+
+            document.getElementById('messageInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+            window.onclick = (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; };
+
+            // 初始化
+            window.onload = async function () {
+                if (!authToken) {
+                    window.location.href = 'login.html';
+                    return;
                 }
-            });
-            localStorage.setItem("allMessages", JSON.stringify(allMessages));
-
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const content = input.value.trim();
-            if (!content || !currentChatUser) return;
-
-            sendDirectMessage(currentChatUser, content);
-            input.value = '';
-            loadChatMessages(currentChatUser);
-        }
-
-        function sendDirectMessage(toUser, content) {
-            const allMessages = JSON.parse(localStorage.getItem("allMessages") || "[]");
-            allMessages.push({
-                from: currentUser.account,
-                to: toUser,
-                content: content,
-                time: new Date().toISOString(),
-                read: false
-            });
-            localStorage.setItem("allMessages", JSON.stringify(allMessages));
-        }
-
-        // 回车发送
-        document.getElementById('messageInput')?.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // 点击模态框外部关闭
-        window.onclick = function (event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        };
+                await fetchUserProfile();
+                updateUserUI();
+                loadStats();
+                // 默认显示首页
+                switchTab('home');
+            };
+        })();
     </script>
-    <script src="ai-chat.js"></script>
+    <!-- 后端对接说明：所有API基于 https://color-adjustment-production.up.railway.app，需Bearer token -->
 </body>
 </html>

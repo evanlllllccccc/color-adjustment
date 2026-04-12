@@ -169,7 +169,7 @@
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 管理员中心</div>
-        <button class="header-btn" onclick="window.location.href='登录界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">退出登录</button>
     </div>
 
     <div class="main-container">
@@ -193,22 +193,22 @@
                     <div class="feature-card" onclick="goToPage('管理员统计.html')">
                         <div class="feature-icon">📊</div>
                         <div class="feature-title">数据统计</div>
-                        <div class="feature-description">查看今日登录人数、浏览量、染色统计数据</div>
+                        <div class="feature-description">查看今日登录人数、浏览量、染色统计数据（云端实时）</div>
                     </div>
                     <div class="feature-card" onclick="goToPage('管理员评论.html')">
                         <div class="feature-icon">💬</div>
                         <div class="feature-title">评论监管</div>
-                        <div class="feature-description">管理和删除用户评论</div>
+                        <div class="feature-description">管理和删除用户评论（实时同步数据库）</div>
                     </div>
                     <div class="feature-card" onclick="goToPage('管理员素材.html')">
                         <div class="feature-icon">🖼️</div>
                         <div class="feature-title">素材管理</div>
-                        <div class="feature-description">上传和管理染色素材</div>
+                        <div class="feature-description">上传和管理染色素材（保存到云端）</div>
                     </div>
                     <div class="feature-card" onclick="goToPage('gallery.html')">
                         <div class="feature-icon">🎨</div>
                         <div class="feature-title">用户作品库</div>
-                        <div class="feature-description">查看所有用户的染色作品</div>
+                        <div class="feature-description">查看所有用户的染色作品（云端实时数据）</div>
                     </div>
                     <div class="feature-card" onclick="goToPage('管理员排行榜.html')">
                         <div class="feature-icon">🏆</div>
@@ -221,9 +221,29 @@
     </div>
 
     <script>
+        // 后端接口地址
+        const API = "https://color-adjustment-production.up.railway.app";
+
+        // 页面跳转
         function goToPage(page) {
             window.location.href = page;
         }
+
+        // 退出登录（清空本地登录状态）
+        function logout() {
+            localStorage.removeItem("currentUser");
+            alert("已退出登录");
+            window.location.href = "login.html";
+        }
+
+        // 进入页面验证是否为管理员
+        window.onload = function () {
+            const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+            if (!user || user.role !== "admin") {
+                alert("无管理员权限");
+                window.location.href = "登录界面.html";
+            }
+        };
     </script>
     <script src="ai-chat.js"></script>
 </body>

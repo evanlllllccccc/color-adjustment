@@ -14,7 +14,7 @@
 
         body {
             min-height: 100vh;
-            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9699a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center center fixed;
+            background: url("https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/b1daa64170314c968fa59a04626ed1f2.png") no-repeat center center fixed;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -78,52 +78,38 @@
         <div class="title">传统色彩数字工坊 - 管理员界面</div>
         <div class="description" id="adminTip">欢迎您，管理员！这里是您的专属管理界面，您可以管理用户、内容和系统设置。</div>
         <button class="btn" onclick="window.location.href='管理员主界面.html'">进入管理员主界面</button>
-        <button class="btn" onclick="window.location.href='登录界面.html'">返回登录</button>
+        <button class="btn btn-secondary" onclick="logout()">返回登录</button>
     </div>
 
     <script>
-        // ===================== 管理员权限验证 + 后端对接 =====================
+        // ===================== 管理员权限验证 =====================
         window.onload = function () {
-            // 从本地读取登录信息
-            const user = JSON.parse(localStorage.getItem("user") || "null");
-
-            // 如果没登录 或 不是管理员，直接踢回登录页
-            if (!user || user.role !== "admin") {
-                alert("您无权访问管理员页面！");
-                location.href = "登录界面.html";
-            } else {
-                // 显示管理员名称
-                document.getElementById("adminTip").innerText =
-                    "欢迎您，管理员 " + user.username + "！这里是您的专属管理界面";
+            const userStr = localStorage.getItem("currentUser");
+            if (!userStr) {
+                alert("请先登录！");
+                location.href = "login.html";
+                return;
             }
+
+            const currentUser = JSON.parse(userStr);
+            if (currentUser.role !== "admin") {
+                alert("无管理员权限！");
+                location.href = "主界面.html";
+                return;
+            }
+
+            // 显示欢迎信息
+            document.getElementById("adminTip").innerText =
+                "欢迎您，管理员 " + (currentUser.username || currentUser.account) + "！这里是您的专属管理界面";
         };
 
         // 退出登录
         function logout() {
-            localStorage.clear();
-            location.href = "登录界面.html";
+            localStorage.removeItem("currentUser");
+            alert("已退出登录");
+            location.href = "login.html";
         }
-        <script>
-            window.onload = function() {
-                let currentUser = localStorage.getItem("currentUser");
-            if (!currentUser) {
-                alert("请先登录！");
-            location.href = "登录界面.html";
-            return;
-      }
-            currentUser = JSON.parse(currentUser);
-            // 只有admin才能进管理页
-            if (currentUser.role !== "admin") {
-                alert("无管理员权限！");
-            location.href = "主界面.html";
-            return;
-      }
-            // 显示管理员账号
-            document.getElementById("adminName").innerText = currentUser.account;
-}
     </script>
-
     <script src="ai-chat.js"></script>
-    <script src="lang.js"></script>
 </body>
 </html>

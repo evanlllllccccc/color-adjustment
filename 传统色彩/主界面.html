@@ -49,6 +49,7 @@
                 transition: color 0.3s;
                 padding: 5px 10px;
                 border-radius: 4px;
+                cursor: pointer;
             }
 
                 .nav-right a:hover {
@@ -181,31 +182,84 @@
     </div>
 
     <script>
-        window.onload = function () {
-            const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+        (function () {
+            // 后端基础地址
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
 
-            if (user) {
-                document.getElementById("loginTip").innerText = "👋 欢迎回来，" + user.account + "！";
-                document.getElementById("userNav").innerHTML = `
-                        <a href="介绍界面.html">项目介绍</a>
-                        <a href="login.html">个人中心</a>
-                        <a href="#" onclick="logout()">退出登录</a>
-                    `;
-            } else {
-                document.getElementById("loginTip").innerText = "👤 当前为游客模式，可体验染色工坊，部分功能需登录";
-                document.getElementById("userNav").innerHTML = `
-                        <a href="介绍界面.html">项目介绍</a>
-                        <a href="login.html">登录/注册</a>
-                    `;
+            // 获取存储的 token
+            const authToken = localStorage.getItem('authToken');
+
+            // 登出函数
+            window.logout = function () {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                // 可选：调用后端登出接口
+                fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                }).catch(() => { }).finally(() => {
+                    window.location.href = 'login.html';
+                });
+            };
+
+            // 初始化界面
+            async function initMainPage() {
+                const loginTip = document.getElementById('loginTip');
+                const userNav = document.getElementById('userNav');
+
+                if (!authToken) {
+                    // 游客模式
+                    loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
+                    userNav.innerHTML = `
+                            <a href="介绍界面.html">项目介绍</a>
+                            <a href="login.html">登录/注册</a>
+                        `;
+                    return;
+                }
+
+                // 有 token，尝试获取用户信息
+                try {
+                    const response = await fetch(`${API_BASE}/api/users/me`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+
+                    if (!response.ok) {
+                        // token 无效或过期
+                        throw new Error('Token 无效');
+                    }
+
+                    const data = await response.json();
+                    const user = data.user || data;
+
+                    // 更新提示和导航
+                    loginTip.innerText = `👋 欢迎回来，${user.account || user.username}！`;
+                    userNav.innerHTML = `
+                            <a href="介绍界面.html">项目介绍</a>
+                            <a href="login.html">个人中心</a>
+                            <a href="#" onclick="logout()">退出登录</a>
+                        `;
+
+                    // 可选：将用户信息暂存到 localStorage 供其他页面快速读取（但始终以后端为准）
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+
+                } catch (error) {
+                    console.warn('获取用户信息失败，视为游客模式', error);
+                    // 清除无效 token
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    loginTip.innerText = '👤 当前为游客模式，可体验染色工坊，部分功能需登录';
+                    userNav.innerHTML = `
+                            <a href="介绍界面.html">项目介绍</a>
+                            <a href="login.html">登录/注册</a>
+                        `;
+                }
             }
-        };
 
-        function logout() {
-            localStorage.removeItem("currentUser");
-            alert("退出成功");
-            window.location.href = "游客界面.html";
-        }
+            // 页面加载时执行
+            window.onload = initMainPage;
+        })();
     </script>
-    <script src="ai-chat.js"></script>
+    <!-- 如果不需要 AI 聊天，可以删除下面的引用，此处保留但不会影响主界面功能 -->
+    <!-- <script src="ai-chat.js"></script> -->
 </body>
 </html>

@@ -183,12 +183,18 @@
             .refresh-btn:hover {
                 background: #9a6843;
             }
+
+        .error-message {
+            color: #c95a5a;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 数据统计</div>
-        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">返回登录界面</button>
     </div>
 
     <div class="main-container">
@@ -212,11 +218,11 @@
                         <div class="stat-card-title">用户统计</div>
                         <div class="stat-item">
                             <div class="stat-label">用户总人数</div>
-                            <div class="stat-value" id="totalUsers">0</div>
+                            <div class="stat-value" id="totalUsers">-</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-label">今日新增注册用户</div>
-                            <div class="stat-value" id="newUsersToday">0</div>
+                            <div class="stat-value" id="newUsersToday">-</div>
                         </div>
                     </div>
 
@@ -224,11 +230,11 @@
                         <div class="stat-card-title">访问统计</div>
                         <div class="stat-item">
                             <div class="stat-label">今日浏览量</div>
-                            <div class="stat-value" id="todayViews">0</div>
+                            <div class="stat-value" id="todayViews">-</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-label">总浏览量</div>
-                            <div class="stat-value" id="totalViews">0</div>
+                            <div class="stat-value" id="totalViews">-</div>
                         </div>
                     </div>
 
@@ -236,11 +242,11 @@
                         <div class="stat-card-title">染色统计</div>
                         <div class="stat-item">
                             <div class="stat-label">今日染色次数</div>
-                            <div class="stat-value" id="todayDyeCount">0</div>
+                            <div class="stat-value" id="todayDyeCount">-</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-label">总染色次数</div>
-                            <div class="stat-value" id="totalDyeCount">0</div>
+                            <div class="stat-value" id="totalDyeCount">-</div>
                         </div>
                     </div>
 
@@ -248,105 +254,105 @@
                         <div class="stat-card-title">作品统计</div>
                         <div class="stat-item">
                             <div class="stat-label">作品总数</div>
-                            <div class="stat-value" id="totalWorks">0</div>
+                            <div class="stat-value" id="totalWorks">-</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-label">今日新增作品</div>
-                            <div class="stat-value" id="newWorksToday">0</div>
+                            <div class="stat-value" id="newWorksToday">-</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="update-time" id="updateTime">最后更新：--</div>
+                <div id="errorMsg" class="error-message"></div>
             </div>
         </div>
     </div>
 
     <script>
-        function goToPage(page) {
-            window.location.href = page;
-        }
+        (function () {
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            const authToken = localStorage.getItem('authToken') || localStorage.getItem('adminToken');
 
-        function loadStats() {
-            // 统计用户总人数
-            let totalUsers = 0;
-            let newUsersToday = 0;
-            const today = new Date().toDateString();
+            if (!authToken) {
+                alert('请先登录管理员账号');
+                window.location.href = '管理员界面.html';
+            }
 
-            for (let key in localStorage) {
-                if (key.startsWith("userDetails_") || key.startsWith("myWorks_")) {
-                    totalUsers++;
+            async function apiRequest(endpoint, options = {}) {
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                };
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+                if (resp.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '管理员界面.html';
+                    throw new Error('登录已过期');
+                }
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(`请求失败: ${resp.status} ${err}`);
+                }
+                return resp.json();
+            }
+
+            window.logout = function () {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('adminToken');
+                window.location.href = '管理员界面.html';
+            };
+
+            window.goToPage = function (page) {
+                window.location.href = page;
+            };
+
+            // 加载统计数据
+            async function loadStats() {
+                const errorDiv = document.getElementById('errorMsg');
+                errorDiv.innerHTML = '';
+
+                // 重置显示为加载中
+                const valueIds = ['totalUsers', 'newUsersToday', 'todayViews', 'totalViews',
+                    'todayDyeCount', 'totalDyeCount', 'totalWorks', 'newWorksToday'];
+                valueIds.forEach(id => document.getElementById(id).innerText = '...');
+
+                try {
+                    // 调用管理员统计接口，期望返回包含所有统计数据的对象
+                    const data = await apiRequest('/api/admin/stats');
+
+                    // 根据实际返回字段更新（此处做了兼容映射）
+                    document.getElementById('totalUsers').innerText = data.totalUsers ?? data.users?.total ?? 0;
+                    document.getElementById('newUsersToday').innerText = data.newUsersToday ?? data.users?.today ?? 0;
+                    document.getElementById('todayViews').innerText = data.todayViews ?? data.views?.today ?? 0;
+                    document.getElementById('totalViews').innerText = data.totalViews ?? data.views?.total ?? 0;
+                    document.getElementById('todayDyeCount').innerText = data.todayDyeCount ?? data.dye?.today ?? 0;
+                    document.getElementById('totalDyeCount').innerText = data.totalDyeCount ?? data.dye?.total ?? 0;
+                    document.getElementById('totalWorks').innerText = data.totalWorks ?? data.works?.total ?? 0;
+                    document.getElementById('newWorksToday').innerText = data.newWorksToday ?? data.works?.today ?? 0;
+
+                    document.getElementById('updateTime').innerText = '最后更新：' + new Date().toLocaleString();
+                } catch (e) {
+                    console.error('加载统计数据失败', e);
+                    errorDiv.innerHTML = '加载失败：' + e.message;
+                    valueIds.forEach(id => document.getElementById(id).innerText = '错误');
                 }
             }
 
-            // 检查今日新增（通过userDetails的时间戳）
-            for (let key in localStorage) {
-                if (key.startsWith("userDetails_")) {
-                    const details = JSON.parse(localStorage.getItem(key) || "{}");
-                    if (details.registerTime) {
-                        const regDate = new Date(details.registerTime).toDateString();
-                        if (regDate === today) newUsersToday++;
-                    }
-                }
-            }
+            // 初始化加载
+            window.onload = function () {
+                loadStats();
+                // 可选：每60秒自动刷新
+                setInterval(loadStats, 60000);
+            };
 
-            // 今日浏览量
-            const todayViews = parseInt(localStorage.getItem("visits_" + today) || "0");
-
-            // 总浏览量
-            let totalViews = 0;
-            for (let key in localStorage) {
-                if (key.startsWith("visits_")) {
-                    totalViews += parseInt(localStorage.getItem(key) || "0");
-                }
-            }
-
-            // 染色次数统计
-            const todayDyeCount = parseInt(localStorage.getItem("dyeCount_" + today) || "0");
-            let totalDyeCount = 0;
-            for (let key in localStorage) {
-                if (key.startsWith("dyeCount_")) {
-                    totalDyeCount += parseInt(localStorage.getItem(key) || "0");
-                }
-            }
-
-            // 作品统计
-            let totalWorks = 0;
-            let newWorksToday = 0;
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    const works = JSON.parse(localStorage.getItem(key) || "[]");
-                    totalWorks += works.length;
-
-                    // 统计今日新增作品
-                    works.forEach(work => {
-                        if (work.time) {
-                            const workDate = new Date(work.time).toDateString();
-                            if (workDate === today) newWorksToday++;
-                        }
-                    });
-                }
-            }
-
-            // 更新显示
-            document.getElementById('totalUsers').innerText = totalUsers;
-            document.getElementById('newUsersToday').innerText = newUsersToday;
-            document.getElementById('todayViews').innerText = todayViews;
-            document.getElementById('totalViews').innerText = totalViews;
-            document.getElementById('todayDyeCount').innerText = todayDyeCount;
-            document.getElementById('totalDyeCount').innerText = totalDyeCount;
-            document.getElementById('totalWorks').innerText = totalWorks;
-            document.getElementById('newWorksToday').innerText = newWorksToday;
-
-            document.getElementById('updateTime').innerText = '最后更新：' + new Date().toLocaleString();
-        }
-
-        window.onload = function () {
-            loadStats();
-            // 每30秒自动刷新
-            setInterval(loadStats, 30000);
-        };
+            // 将 loadStats 挂载到全局以便按钮调用
+            window.loadStats = loadStats;
+        })();
     </script>
-    <script src="ai-chat.js"></script>
 </body>
 </html>

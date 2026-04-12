@@ -248,7 +248,7 @@
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 评论监管</div>
-        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">返回登录</button>
     </div>
 
     <div class="main-container">
@@ -263,7 +263,7 @@
 
         <div class="content">
             <div class="content-card">
-                <div class="content-title">用户评论监管</div>
+                <div class="content-title">用户评论监管（云端实时数据）</div>
 
                 <div class="stats-bar">
                     <div class="stat-box">
@@ -286,67 +286,91 @@
     </div>
 
     <script>
+        // ===================== 后端地址 =====================
+        const API = "https://color-adjustment-production.up.railway.app";
+
+        let commentList = [];
+
         function goToPage(page) {
             window.location.href = page;
         }
 
-        function loadComments() {
-            const commentsList = document.getElementById('commentsList');
-            const allComments = JSON.parse(localStorage.getItem("allComments") || "[]");
+        // 退出登录
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
 
-            // 统计
-            document.getElementById('totalComments').innerText = allComments.length;
+        // ===================== 加载云端评论 =====================
+        async function loadComments() {
+            try {
+                let res = await fetch(API + "/api/comments");
+                let data = await res.json();
+                commentList = data || [];
 
-            const today = new Date().toDateString();
-            const todayCount = allComments.filter(c => new Date(c.time).toDateString() === today).length;
-            document.getElementById('todayComments').innerText = todayCount;
+                // 统计
+                document.getElementById('totalComments').innerText = commentList.length;
+                const today = new Date().toDateString();
+                const todayCount = commentList.filter(c =>
+                    new Date(c.createTime).toDateString() === today
+                ).length;
+                document.getElementById('todayComments').innerText = todayCount;
 
-            if (allComments.length === 0) {
-                commentsList.innerHTML = '<div class="empty-state">暂无评论数据</div>';
+                renderComments();
+            } catch (e) {
+                document.getElementById("commentsList").innerHTML = `<div class="empty-state">加载失败</div>`;
+            }
+        }
+
+        // 渲染评论
+        function renderComments() {
+            const list = document.getElementById('commentsList');
+            if (commentList.length === 0) {
+                list.innerHTML = '<div class="empty-state">暂无评论</div>';
                 return;
             }
 
-            // 按时间倒序
-            const sortedComments = [...allComments].sort((a, b) => new Date(b.time) - new Date(a.time));
+            // 倒序
+            const sorted = [...commentList].sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
 
-            commentsList.innerHTML = sortedComments.map((comment, index) => `
-            <div class="comment-item" id="comment-${index}">
-              <div class="comment-content">
-                <div class="comment-header">
-                  <div class="comment-user">${comment.fromUser}</div>
-                  <div class="comment-work">作品：${comment.workTitle}</div>
+            list.innerHTML = sorted.map((c, idx) => `
+                <div class="comment-item">
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <div class="comment-user">${c.username}</div>
+                            <div class="comment-work">素材ID：${c.imageId}</div>
+                        </div>
+                        <div class="comment-text">${c.content}</div>
+                        <div class="comment-time">${new Date(c.createTime).toLocaleString()}</div>
+                    </div>
+                    <div class="comment-actions">
+                        <button class="action-btn btn-delete" onclick="deleteComment(${c.id})">删除评论</button>
+                    </div>
                 </div>
-                <div class="comment-text">${comment.content}</div>
-                <div class="comment-time">${new Date(comment.time).toLocaleString()}</div>
-              </div>
-              <div class="comment-actions">
-                <button class="action-btn btn-view" onclick="viewWork('${comment.toUser}', '${comment.workTitle}')">查看作品</button>
-                <button class="action-btn btn-delete" onclick="deleteComment(${index})">删除</button>
-              </div>
-            </div>
-          `).join('');
+                `).join('');
         }
 
-        function viewWork(author, workTitle) {
-            // 跳转到作品库并筛选
-            localStorage.setItem('viewWorkTitle', workTitle);
-            window.location.href = 'gallery.html?author=' + encodeURIComponent(author);
+        // ===================== 删除云端评论 =====================
+        async function deleteComment(commentId) {
+            if (!confirm("确定删除这条评论？")) return;
+            try {
+                await fetch(API + "/api/comment/" + commentId, { method: "DELETE" });
+                alert("删除成功");
+                loadComments();
+            } catch (e) {
+                alert("删除失败");
+            }
         }
 
-        function deleteComment(index) {
-            if (!confirm('确定要删除这条评论吗？')) return;
-
-            let allComments = JSON.parse(localStorage.getItem("allComments") || "[]");
-            allComments.sort((a, b) => new Date(b.time) - new Date(a.time));
-            allComments.splice(index, 1);
-            localStorage.setItem("allComments", JSON.stringify(allComments));
-
-            loadComments();
-        }
-
+        // 权限验证 + 自动加载
         window.onload = function () {
+            const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+            if (!user || user.role !== "admin") {
+                alert("无管理员权限");
+                window.location.href = "login.html";
+                return;
+            }
             loadComments();
-            setInterval(loadComments, 30000);
         };
     </script>
     <script src="ai-chat.js"></script>

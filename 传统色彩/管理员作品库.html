@@ -287,7 +287,6 @@
             grid-column: 1 / -1;
         }
 
-        /* 详情模态框 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -404,7 +403,7 @@
 <body>
     <div class="header">
         <div class="header-title">传统色彩数字工坊 - 管理员作品库</div>
-        <button class="header-btn" onclick="window.location.href='管理员界面.html'">返回登录界面</button>
+        <button class="header-btn" onclick="logout()">返回登录界面</button>
     </div>
 
     <div class="main-container">
@@ -470,193 +469,253 @@
     </div>
 
     <script>
-        let allWorks = [];
-        let currentFilter = 'all';
-        let currentWorkId = null;
+        (function () {
+            const API_BASE = 'https://color-adjustment-production.up.railway.app';
+            // 管理员 token，假设存储在 localStorage，键名可能为 'authToken' 或 'adminToken'
+            const authToken = localStorage.getItem('authToken') || localStorage.getItem('adminToken');
 
-        function goToPage(page) {
-            window.location.href = page;
-        }
+            // 状态
+            let allWorks = [];           // 原始作品列表
+            let filteredWorks = [];      // 当前显示的作品列表
+            let currentFilter = 'all';
+            let currentWorkId = null;
+            let searchKeyword = '';
 
-        function setFilter(type, element) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-
-            switch (type) {
-                case 'all':
-                    allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-                    break;
-                case 'hot':
-                    allWorks.sort((a, b) => b.likes - a.likes);
-                    break;
-                case 'new':
-                    allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-                    break;
+            // 检查登录状态
+            if (!authToken) {
+                alert('请先登录管理员账号');
+                window.location.href = '管理员界面.html';
             }
-            renderGallery();
-        }
 
-        function filterWorks() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allWorks.filter(work =>
-                work.title.toLowerCase().includes(keyword) ||
-                work.author.toLowerCase().includes(keyword)
-            );
-            renderGallery(filtered);
-        }
+            // 通用请求
+            async function apiRequest(endpoint, options = {}) {
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                };
+                if (!(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+                if (resp.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '管理员界面.html';
+                    throw new Error('登录已过期');
+                }
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(`请求失败: ${resp.status} ${err}`);
+                }
+                return resp.json();
+            }
 
-        function loadGallery() {
-            allWorks = [];
-            let totalLikes = 0;
-            let authors = new Set();
+            // 登出
+            window.logout = function () {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('adminToken');
+                window.location.href = '管理员界面.html';
+            };
 
-            // 收集所有作品
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    const author = key.replace("myWorks_", "");
-                    authors.add(author);
-                    const userDetails = JSON.parse(localStorage.getItem("userDetails_" + author) || "{}");
-                    const works = JSON.parse(localStorage.getItem(key) || "[]");
+            window.goToPage = function (page) {
+                window.location.href = page;
+            };
 
-                    works.forEach((work, idx) => {
-                        totalLikes += work.likes || 0;
-                        allWorks.push({
-                            id: author + "_" + idx,
-                            title: work.title,
-                            img: work.img,
-                            author: author,
-                            authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${author.length}`,
-                            likes: work.likes || 0,
-                            views: work.views || 0,
-                            time: work.time || new Date().toISOString(),
-                            comments: work.comments || []
-                        });
-                    });
+            // 加载所有作品（管理员接口）
+            async function loadGallery() {
+                const grid = document.getElementById('galleryGrid');
+                grid.innerHTML = '<div class="empty-state">加载中...</div>';
+
+                try {
+                    // 假设管理员获取所有作品的接口为 /api/admin/works
+                    const data = await apiRequest('/api/admin/works');
+                    const works = data.works || data || [];
+
+                    // 转换数据格式
+                    allWorks = works.map(work => ({
+                        id: work.id,
+                        title: work.title || '未命名',
+                        img: work.imageUrl || work.img || 'https://picsum.photos/400/300?random=' + work.id,
+                        author: work.author?.account || work.authorName || '未知作者',
+                        authorAvatar: work.author?.avatar || `https://picsum.photos/200/200?random=${work.author?.account?.length || 10}`,
+                        likes: work.likes || 0,
+                        views: work.views || 0,
+                        time: work.createdAt || work.time || new Date().toISOString(),
+                        comments: work.comments || []
+                    }));
+
+                    // 更新统计
+                    updateStats();
+
+                    // 应用当前筛选
+                    applyFilterAndSort();
+                    renderGallery();
+                } catch (e) {
+                    console.error('加载作品失败', e);
+                    grid.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
                 }
             }
 
-            // 更新统计
-            document.getElementById('totalWorks').innerText = allWorks.length;
-            document.getElementById('totalAuthors').innerText = authors.size;
-            document.getElementById('totalLikes').innerText = totalLikes;
-
-            // 默认排序
-            allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-            renderGallery();
-        }
-
-        function renderGallery(works = allWorks) {
-            const grid = document.getElementById('galleryGrid');
-
-            if (works.length === 0) {
-                grid.innerHTML = '<div class="empty-state">暂无作品</div>';
-                return;
+            function updateStats() {
+                const totalWorks = allWorks.length;
+                const authors = new Set(allWorks.map(w => w.author)).size;
+                const totalLikes = allWorks.reduce((sum, w) => sum + w.likes, 0);
+                document.getElementById('totalWorks').innerText = totalWorks;
+                document.getElementById('totalAuthors').innerText = authors;
+                document.getElementById('totalLikes').innerText = totalLikes;
             }
 
-            grid.innerHTML = works.map(work => `
-            <div class="work-card">
-              <img src="${work.img}" class="work-image" onclick="showDetail('${work.id}')" alt="${work.title}">
-              <div class="work-content">
-                <div class="work-header">
-                  <div class="work-title">${work.title}</div>
-                </div>
-                <div class="work-author">
-                  <img src="${work.authorAvatar}" class="author-avatar">
-                  <span>${work.author}</span>
-                </div>
-                <div class="work-stats">
-                  <span>👁 ${work.views}</span>
-                  <span>👍 ${work.likes}</span>
-                  <span>💬 ${work.comments.length}</span>
-                </div>
-                <div class="work-actions">
-                  <button class="btn-action" onclick="showDetail('${work.id}')">查看详情</button>
-                  <button class="btn-action btn-delete" onclick="deleteWork('${work.id}')">删除</button>
-                </div>
-              </div>
-            </div>
-          `).join('');
-        }
+            function applyFilterAndSort() {
+                // 先复制一份用于筛选
+                let list = [...allWorks];
 
-        function showDetail(workId) {
-            const work = allWorks.find(w => w.id === workId);
-            if (!work) return;
+                // 搜索过滤
+                if (searchKeyword) {
+                    const kw = searchKeyword.toLowerCase();
+                    list = list.filter(w =>
+                        w.title.toLowerCase().includes(kw) ||
+                        w.author.toLowerCase().includes(kw)
+                    );
+                }
 
-            currentWorkId = workId;
-
-            document.getElementById('modalTitle').innerText = work.title;
-            document.getElementById('modalImg').src = work.img;
-
-            document.getElementById('modalInfo').innerHTML = `
-            <div class="modal-info-item">
-              <span>作者</span>
-              <span>${work.author}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>点赞数</span>
-              <span>${work.likes}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>浏览量</span>
-              <span>${work.views}</span>
-            </div>
-            <div class="modal-info-item">
-              <span>发布时间</span>
-              <span>${new Date(work.time).toLocaleString()}</span>
-            </div>
-          `;
-
-            const commentsHtml = work.comments.length > 0
-                ? work.comments.map(c => `
-                <div class="modal-comment-item">
-                  <strong>${c.author}:</strong> ${c.text}
-                  <div style="font-size:12px;color:#a87f61;margin-top:5px;">${new Date(c.time).toLocaleString()}</div>
-                </div>
-              `).join('')
-                : '<div style="color:#a87f61;text-align:center;">暂无评论</div>';
-
-            document.getElementById('modalComments').innerHTML = `
-            <h4 style="color:#8c5c3b;margin-bottom:10px;">评论 (${work.comments.length})</h4>
-            ${commentsHtml}
-          `;
-
-            document.getElementById('detailModal').classList.add('show');
-        }
-
-        function closeModal(event) {
-            if (!event || event.target.id === 'detailModal') {
-                document.getElementById('detailModal').classList.remove('show');
-                currentWorkId = null;
+                // 排序
+                switch (currentFilter) {
+                    case 'hot':
+                        list.sort((a, b) => b.likes - a.likes);
+                        break;
+                    case 'new':
+                        list.sort((a, b) => new Date(b.time) - new Date(a.time));
+                        break;
+                    default: // all
+                        list.sort((a, b) => new Date(b.time) - new Date(a.time));
+                        break;
+                }
+                filteredWorks = list;
             }
-        }
 
-        function deleteWork(workId) {
-            if (!confirm('确定要删除这个作品吗？此操作不可恢复！')) return;
+            function renderGallery() {
+                const grid = document.getElementById('galleryGrid');
+                if (filteredWorks.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">暂无作品</div>';
+                    return;
+                }
 
-            const [author, idx] = workId.split('_');
-            const worksKey = "myWorks_" + author;
-            const works = JSON.parse(localStorage.getItem(worksKey) || "[]");
+                grid.innerHTML = filteredWorks.map(work => `
+                    <div class="work-card">
+                        <img src="${work.img}" class="work-image" onclick="showDetail('${work.id}')" alt="${escapeHtml(work.title)}" onerror="this.src='https://picsum.photos/400/300?random=${work.id}'">
+                        <div class="work-content">
+                            <div class="work-header">
+                                <div class="work-title">${escapeHtml(work.title)}</div>
+                            </div>
+                            <div class="work-author">
+                                <img src="${work.authorAvatar}" class="author-avatar" onerror="this.src='https://picsum.photos/200/200?random=avatar'">
+                                <span>${escapeHtml(work.author)}</span>
+                            </div>
+                            <div class="work-stats">
+                                <span>👁 ${work.views}</span>
+                                <span>👍 ${work.likes}</span>
+                                <span>💬 ${work.comments.length}</span>
+                            </div>
+                            <div class="work-actions">
+                                <button class="btn-action" onclick="showDetail('${work.id}')">查看详情</button>
+                                <button class="btn-action btn-delete" onclick="deleteWork('${work.id}')">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
 
-            if (works[idx]) {
-                works.splice(idx, 1);
-                localStorage.setItem(worksKey, JSON.stringify(works));
-                alert('作品已删除');
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            window.filterWorks = function () {
+                searchKeyword = document.getElementById('searchInput').value;
+                applyFilterAndSort();
+                renderGallery();
+            };
+
+            window.setFilter = function (type, element) {
+                currentFilter = type;
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                element.classList.add('active');
+                applyFilterAndSort();
+                renderGallery();
+            };
+
+            window.showDetail = async function (workId) {
+                const work = filteredWorks.find(w => w.id === workId) || allWorks.find(w => w.id === workId);
+                if (!work) return;
+
+                currentWorkId = workId;
+
+                document.getElementById('modalTitle').innerText = work.title;
+                document.getElementById('modalImg').src = work.img;
+
+                document.getElementById('modalInfo').innerHTML = `
+                    <div class="modal-info-item"><span>作者</span><span>${escapeHtml(work.author)}</span></div>
+                    <div class="modal-info-item"><span>点赞数</span><span>${work.likes}</span></div>
+                    <div class="modal-info-item"><span>浏览量</span><span>${work.views}</span></div>
+                    <div class="modal-info-item"><span>发布时间</span><span>${new Date(work.time).toLocaleString()}</span></div>
+                `;
+
+                // 评论可能需另外获取，这里直接展示作品数据里的comments
+                const commentsHtml = work.comments.length > 0
+                    ? work.comments.map(c => `
+                        <div class="modal-comment-item">
+                            <strong>${escapeHtml(c.author || c.fromUser || '用户')}:</strong> ${escapeHtml(c.text || c.content)}
+                            <div style="font-size:12px;color:#a87f61;margin-top:5px;">${new Date(c.time || c.createdAt).toLocaleString()}</div>
+                        </div>
+                    `).join('')
+                    : '<div style="color:#a87f61;text-align:center;">暂无评论</div>';
+
+                document.getElementById('modalComments').innerHTML = `
+                    <h4 style="color:#8c5c3b;margin-bottom:10px;">评论 (${work.comments.length})</h4>
+                    ${commentsHtml}
+                `;
+
+                document.getElementById('detailModal').classList.add('show');
+            };
+
+            window.closeModal = function (event) {
+                if (!event || event.target.id === 'detailModal' || event.target.classList.contains('modal-overlay')) {
+                    document.getElementById('detailModal').classList.remove('show');
+                    currentWorkId = null;
+                }
+            };
+
+            window.deleteWork = async function (workId) {
+                if (!confirm('确定要删除这个作品吗？此操作不可恢复！')) return;
+
+                try {
+                    await apiRequest(`/api/admin/works/${workId}`, { method: 'DELETE' });
+                    alert('作品已删除');
+                    // 从本地列表中移除
+                    allWorks = allWorks.filter(w => w.id !== workId);
+                    applyFilterAndSort();
+                    updateStats();
+                    renderGallery();
+                    closeModal();
+                } catch (e) {
+                    alert('删除失败: ' + e.message);
+                }
+            };
+
+            window.deleteCurrentWork = function () {
+                if (!currentWorkId) return;
+                deleteWork(currentWorkId);
+            };
+
+            // 初始化
+            window.onload = function () {
                 loadGallery();
-            }
-        }
-
-        function deleteCurrentWork() {
-            if (!currentWorkId) return;
-            deleteWork(currentWorkId);
-            closeModal();
-        }
-
-        window.onload = function () {
-            loadGallery();
-            setInterval(loadGallery, 30000);
-        };
+                // 可设置定时刷新，但非必须
+                // setInterval(loadGallery, 30000);
+            };
+        })();
     </script>
-    <script src="ai-chat.js"></script>
 </body>
 </html>
