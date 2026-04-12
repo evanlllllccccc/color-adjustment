@@ -36,10 +36,11 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
 
+// 修改数据库连接部分
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('❌ 数据库打开失败:', err.message);
-        process.exit(1);
+        // 不退出，让 HTTP 服务先启动，方便排查问题
     } else {
         console.log('✅ 数据库连接成功');
         initDatabase();
@@ -225,11 +226,14 @@ app.get('/health', (req, res) => {
 });
 
 // ======================================
-// ✅ 端口监听（带错误捕获）
+// ✅ 端口监听（带错误捕获 + 0.0.0.0 绑定）
 // ======================================
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-    console.log(`✅ 服务器运行在端口 ${PORT}`);
+
+// 注意：'0.0.0.0' 是必须的，让 Railway 可以从外部访问
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 服务器运行在端口 ${PORT}`);
+    console.log(`📍 健康检查: http://0.0.0.0:${PORT}/health`);
 }).on('error', (err) => {
     console.error('❌ 服务器启动失败:', err.message);
     process.exit(1);
