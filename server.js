@@ -4,12 +4,20 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const app = express();
-
 // 中间件
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '.'))); // 修复线上路径
+// ================= 核心配置：允许前端跨域 =================
+app.use(cors({
+  origin: [
+    "https://color-adjustment.vercel.app", // 你的 Vercel 前端域名
+    "http://localhost:3000"              // 本地测试备用
+  ],
+  credentials: true, // 允许携带 cookie
+  methods: ["GET", "POST", "PUT", "DELETE"]
+}));
+// ===========================================================
 
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '.'))); // 静态资源
 // 数据库初始化（线上也能用）
 const db = new sqlite3.Database(path.join(__dirname, './database.db'));
 db.serialize(() => {
