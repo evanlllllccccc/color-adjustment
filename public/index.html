@@ -137,7 +137,6 @@
         }
     </style>
 </head>
-
 <body>
 
     <div class="login-card">
@@ -153,7 +152,7 @@
             <input type="password" id="loginPwd" placeholder="请输入密码">
         </div>
 
-        <button class="btn btn-login" onclick="goLogin()">登录</button>
+        <button class="btn btn-login" onclick="handleLogin()">登录</button>
         <button class="btn btn-register" onclick="showRegister()">注册账号</button>
         <button class="btn btn-guest" onclick="goGuest()">游客进入</button>
     </div>
@@ -162,7 +161,6 @@
         <div class="modal-card">
             <div class="close-modal" onclick="hideRegister()">关闭 ×</div>
             <div class="modal-title">账号注册</div>
-
             <div class="input-group">
                 <label>账号</label>
                 <input type="text" id="regAccount" placeholder="请输入账号">
@@ -171,99 +169,84 @@
                 <label>密码</label>
                 <input type="password" id="regPwd" placeholder="请输入密码">
             </div>
-
             <button class="btn btn-login" onclick="doRegister()">完成注册</button>
         </div>
     </div>
 
     <script>
-        // 后端地址（你的云端服务器）
-        const API = "https://color-adjustment-production.up.railway.app";
+        // 后端地址（前后端同源后可使用相对路径，但这里保留绝对路径以便兼容，相对路径更佳）
+        // 如果前后端同域，建议直接使用相对路径，例如 '/api/register'
+        const API = '';  // 空字符串表示使用相对路径
 
-        function showRegister() {
-            document.getElementById("regModal").classList.add("show");
-        }
-        function hideRegister() {
-            document.getElementById("regModal").classList.remove("show");
-        }
+        function showRegister() { document.getElementById("regModal").classList.add("show"); }
+        function hideRegister() { document.getElementById("regModal").classList.remove("show"); }
 
-        // ==========================================
-        // 注册（保存到云端数据库）
-        // ==========================================
+        // ========== 注册 ==========
         async function doRegister() {
-            let account = document.getElementById("regAccount").value.trim();
-            let pwd = document.getElementById("regPwd").value.trim();
-
-            if (!account || !pwd) {
-                alert("请填写账号和密码");
-                return;
-            }
-
+            const account = document.getElementById("regAccount").value.trim();
+            const pwd = document.getElementById("regPwd").value.trim();
+            if (!account || !pwd) { alert("请填写账号和密码"); return; }
             try {
-                let res = await fetch(API + "/api/register", {
+                const res = await fetch(API + "/api/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username: account, password: pwd })
                 });
-
-                let result = await res.json();
-
+                const result = await res.json();
                 if (result.success) {
                     alert("注册成功！请登录");
                     hideRegister();
+                    // 清空注册表单
+                    document.getElementById("regAccount").value = '';
+                    document.getElementById("regPwd").value = '';
                 } else {
-                    alert(result.msg || "注册失败，账号已存在");
+                    alert(result.msg || "注册失败，账号可能已存在");
                 }
             } catch (e) {
                 alert("注册失败，请检查网络");
             }
         }
 
-        // ==========================================
-        // 登录（验证云端数据库）
-        // ==========================================
+        // ========== 登录 ==========
         async function handleLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = document.getElementById("loginAccount").value.trim();
+            const password = document.getElementById("loginPwd").value;
+            if (!username || !password) { alert("请输入账号和密码"); return; }
             try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                const res = await fetch(API + "/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // ✅ 正确保存用户信息
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
-                    // ✅ 根据角色跳转
-                    if (data.user.role === 'admin') {
-                        window.location.href = '管理员主界面.html';
+                    localStorage.setItem("currentUser", JSON.stringify(data.user));
+                    if (data.user.role === "admin") {
+                        window.location.href = "管理员界面.html";
                     } else {
-                        window.location.href = '主界面.html';
+                        window.location.href = "主界面.html";
                     }
                 } else {
-                    alert(data.msg || '登录失败');
+                    alert(data.msg || "登录失败");
                 }
             } catch (err) {
-                alert('网络错误，请稍后重试');
+                alert("网络错误，请稍后重试");
             }
         }
 
-        // ==========================================
-        // 游客登录
-        // ==========================================
+        // ========== 游客 ==========
         async function goGuest() {
-            let res = await fetch(API + "/api/guest", { method: "POST" });
-            let result = await res.json();
-            if (result.success) {
-                localStorage.setItem("currentUser", JSON.stringify({
-                    userId: 0,
-                    username: "游客"
-                }));
-                location.href = "游客界面.html";
+            try {
+                const res = await fetch(API + "/api/guest", { method: "POST" });
+                const result = await res.json();
+                if (result.success) {
+                    localStorage.setItem("currentUser", JSON.stringify({ userId: 0, username: "游客" }));
+                    location.href = "游客界面.html";
+                }
+            } catch (e) {
+                alert("网络错误，无法进入游客模式");
             }
         }
     </script>
-
 </body>
 </html>

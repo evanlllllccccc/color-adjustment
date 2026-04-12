@@ -6,18 +6,16 @@ const path = require('path');
 const app = express();
 
 // ====================== 跨域配置 ======================
-// 允许前端域名（包括本地开发、Vercel 和您的阿里云 OSS）
 const allowedOrigins = [
     'https://color-adjustment.vercel.app',
     'http://localhost:3000',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    'https://colorad.oss-cn-beijing.aliyuncs.com'   // 您的阿里云 OSS 域名
+    'https://colorad.oss-cn-beijing.aliyuncs.com'
 ];
 
 app.use(cors({
     origin: function (origin, callback) {
-        // 允许没有 origin 的请求（如 Postman）
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
@@ -31,13 +29,11 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
-// 托管 public 文件夹下的静态文件（前端页面）
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ====================== 数据库初始化（关键修复） ======================
-// 使用 Railway 可写路径
+// ====================== 数据库初始化 ======================
 const dbPath = process.env.NODE_ENV === 'production'
-    ? path.join('/app', 'database.db')    // Railway 容器内固定路径
+    ? path.join('/app', 'database.db')
     : path.join(__dirname, 'database.db');
 
 console.log('📁 数据库路径:', dbPath);
@@ -50,7 +46,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.log('✅ 数据库连接成功');
 });
 
-// 封装 Promise 以顺序初始化表
 function runAsync(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.run(sql, params, function (err) {
@@ -62,7 +57,6 @@ function runAsync(sql, params = []) {
 
 async function initDatabase() {
     try {
-        // 创建表（如果不存在）
         await runAsync(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
@@ -101,7 +95,6 @@ async function initDatabase() {
         )`);
         console.log('✅ blockWords 表已就绪');
 
-        // 插入默认管理员账号（如果不存在）
         await runAsync(
             `INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)`,
             ['admin', '123456', 'admin']
@@ -117,9 +110,39 @@ async function initDatabase() {
 
 // ====================== 业务接口 ======================
 
-// 健康检查（Railway 探针）
+// 健康检查
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
+});
+
+// ========== 注册（新增） ==========
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, msg: '账号和密码不能为空' });
+    }
+    // 检查用户名是否已存在
+    db.get(`SELECT id FROM users WHERE username = ?`, [username], (err, row) => {
+        if (err) {
+            console.error('注册查询错误:', err);
+            return res.status(500).json({ success: false, msg: '服务器错误' });
+        }
+        if (row) {
+            return res.json({ success: false, msg: '账号已存在' });
+        }
+        // 插入新用户
+        db.run(
+            `INSERT INTO users (username, password, role) VALUES (?, ?, 'user')`,
+            [username, password],
+            function (err) {
+                if (err) {
+                    console.error('注册插入错误:', err);
+                    return res.status(500).json({ success: false, msg: '注册失败' });
+                }
+                res.json({ success: true, msg: '注册成功' });
+            }
+        );
+    });
 });
 
 // 登录
@@ -139,12 +162,10 @@ app.post('/api/login', (req, res) => {
             }
             if (!row) return res.json({ success: false, msg: '账号或密码错误' });
 
-            // 更新登录统计
             db.run(
                 `UPDATE users SET loginToday=?, lastLoginDate=? WHERE id=?`,
                 [row.lastLoginDate !== today ? 1 : row.loginToday + 1, today, row.id]
             );
-            // 不返回密码字段
             const { password, ...userWithoutPassword } = row;
             res.json({ success: true, user: userWithoutPassword });
         }
@@ -173,7 +194,6 @@ app.post('/api/add-block-word', (req, res) => {
     });
 });
 
-// 检查屏蔽词（内部函数）
 function checkBlockWord(comment, callback) {
     db.all(`SELECT word FROM blockWords`, (err, words) => {
         if (err) return callback(false);
@@ -288,10 +308,67 @@ app.get('/api/rank', (req, res) => {
     );
 });
 
+// ====================== 管理员接口（示例） ======================
+app.get('/api/admin/stats', (req, res) => {
+    // 简单返回示例数据，可根据需要扩展
+    db.get(`SELECT COUNT(*) AS totalUsers FROM users`, (err, users) => {
+        db.get(`SELECT COUNT(*) AS totalWorks FROM dyeRecords WHERE draft=0`, (err, works) => {
+            res.json({
+                totalUsers: users['COUNT(*)'] || 0,
+                totalWorks: works['COUNT(*)'] || 0,
+                totalLikes: 0,
+                todayViews: 0,
+                newUsersToday: 0,
+                newWorksToday: 0,
+                totalDyeCount: 0,
+                todayDyeCount: 0
+            });
+        });
+    });
+});
+
+app.get('/api/admin/works', (req, res) => {
+    db.all(`SELECT * FROM dyeRecords WHERE draft=0`, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ works: rows });
+    });
+});
+
+app.delete('/api/admin/works/:id', (req, res) => {
+    const { id } = req.params;
+    db.run(`DELETE FROM dyeRecords WHERE id=?`, [id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+app.get('/api/admin/materials', (req, res) => {
+    db.all(`SELECT * FROM images`, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ materials: rows });
+    });
+});
+
+app.post('/api/admin/materials', upload.single('image'), (req, res) => {
+    const { name, category } = req.body;
+    const filename = req.file.filename;
+    db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [name, filename], function (err) {
+        if (err) return res.status(500).json({ success: false });
+        res.json({ success: true });
+    });
+});
+
+app.delete('/api/admin/materials/:id', (req, res) => {
+    const { id } = req.params;
+    db.run(`DELETE FROM images WHERE id=?`, [id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 // ====================== 启动服务器 ======================
 const PORT = process.env.PORT || 3000;
 
-// 先初始化数据库，再启动监听
 initDatabase().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 服务器运行在端口 ${PORT}`);
