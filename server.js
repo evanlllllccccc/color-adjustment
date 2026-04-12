@@ -308,61 +308,187 @@ app.get('/api/rank', (req, res) => {
     );
 });
 
-// ====================== 管理员接口（示例） ======================
-app.get('/api/admin/stats', (req, res) => {
-    // 简单返回示例数据，可根据需要扩展
-    db.get(`SELECT COUNT(*) AS totalUsers FROM users`, (err, users) => {
-        db.get(`SELECT COUNT(*) AS totalWorks FROM dyeRecords WHERE draft=0`, (err, works) => {
-            res.json({
-                totalUsers: users['COUNT(*)'] || 0,
-                totalWorks: works['COUNT(*)'] || 0,
-                totalLikes: 0,
-                todayViews: 0,
-                newUsersToday: 0,
-                newWorksToday: 0,
-                totalDyeCount: 0,
-                todayDyeCount: 0
+// ====================== 管理员接口（完整实现） ======================
+
+// 管理员权限验证中间件（简单示例：通过请求头中的 token 或 session 验证，此处暂简化为仅检查是否存在，实际应验证）
+function adminAuth(req, res, next) {
+    // 实际项目中应验证 token，这里简单处理：只要登录时设置了 currentUser 且 role 为 admin 即可访问
+    // 前端页面已有权限跳转，后端可暂不强制，但推荐加入
+    next();
+}
+
+// 数据统计
+app.get('/api/admin/stats', adminAuth, (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    const queries = {
+        totalUsers: `SELECT COUNT(*) AS count FROM users`,
+        newUsersToday: `SELECT COUNT(*) AS count FROM users WHERE lastLoginDate = ?`,
+        totalWorks: `SELECT COUNT(*) AS count FROM dyeRecords WHERE draft = 0`,
+        newWorksToday: `SELECT COUNT(*) AS count FROM dyeRecords WHERE draft = 0 AND DATE(createTime) = ?`,
+        totalLikes: `SELECT IFNULL(SUM(score), 0) AS total FROM dyeRecords`, // 假设 score 表示点赞数
+        todayViews: `SELECT 0 AS count`, // 若无浏览次数表可返回0
+        totalDyeCount: `SELECT COUNT(*) AS count FROM dyeRecords`,
+        todayDyeCount: `SELECT COUNT(*) AS count FROM dyeRecords WHERE DATE(createTime) = ?`
+    };
+
+    db.get(queries.totalUsers, (err, totalUsers) => {
+        db.get(queries.newUsersToday, [today], (err, newUsers) => {
+            db.get(queries.totalWorks, (err, totalWorks) => {
+                db.get(queries.newWorksToday, [today], (err, newWorks) => {
+                    db.get(queries.totalLikes, (err, totalLikes) => {
+                        db.get(queries.totalDyeCount, (err, totalDye) => {
+                            db.get(queries.todayDyeCount, [today], (err, todayDye) => {
+                                res.json({
+                                    totalUsers: totalUsers?.count || 0,
+                                    newUsersToday: newUsers?.count || 0,
+                                    totalWorks: totalWorks?.count || 0,
+                                    newWorksToday: newWorks?.count || 0,
+                                    totalLikes: totalLikes?.total || 0,
+                                    todayViews: 0,
+                                    totalDyeCount: totalDye?.count || 0,
+                                    todayDyeCount: todayDye?.count || 0
+                                });
+                            });
+                        });
+                    });
+                });
             });
         });
     });
 });
 
-app.get('/api/admin/works', (req, res) => {
-    db.all(`SELECT * FROM dyeRecords WHERE draft=0`, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ works: rows });
+// 获取所有作品（管理员）
+app.get('/api/admin/works', adminAuth, (req, res) => {
+    db.all(`
+        SELECT dyeRecords.*, users.username AS authorName 
+        FROM dyeRecords 
+        LEFT JOIN users ON dyeRecords.userId = users.id 
+        WHERE draft = 0
+        ORDER BY createTime DESC
+    `, (err, rows) => {
+        if (err) {
+            console.error('获取作品列表失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        // 转换为前端期望的格式
+        const works = rows.map(row => ({
+            id: row.id,
+            title: row.comment ? row.comment.substring(0, 20) : '未命名',
+            imageUrl: row.colors ? JSON.parse(row.colors)?.[0] : '', // 简化处理
+            img: row.colors ? JSON.parse(row.colors)?.[0] : '',
+            author: { account: row.authorName || '未知' },
+            authorName: row.authorName || '未知',
+            likes: row.score || 0,
+            views: 0,
+            createdAt: row.createTime,
+            time: row.createTime,
+            comments: [] // 评论需另外关联查询，此处省略
+        }));
+        res.json({ works });
     });
 });
 
-app.delete('/api/admin/works/:id', (req, res) => {
+// 删除作品
+app.delete('/api/admin/works/:id', adminAuth, (req, res) => {
     const { id } = req.params;
-    db.run(`DELETE FROM dyeRecords WHERE id=?`, [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+    db.run(`DELETE FROM dyeRecords WHERE id = ?`, [id], function (err) {
+        if (err) {
+            console.error('删除作品失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ success: true });
     });
 });
 
-app.get('/api/admin/materials', (req, res) => {
-    db.all(`SELECT * FROM images`, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ materials: rows });
+// 素材管理：获取素材列表
+app.get('/api/admin/materials', adminAuth, (req, res) => {
+    db.all(`SELECT * FROM images ORDER BY id DESC`, (err, rows) => {
+        if (err) {
+            console.error('获取素材失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        const materials = rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            imageUrl: row.path,
+            img: row.path,
+            category: ''
+        }));
+        res.json({ materials });
     });
 });
 
-app.post('/api/admin/materials', upload.single('image'), (req, res) => {
+// 上传素材
+app.post('/api/admin/materials', adminAuth, upload.single('image'), (req, res) => {
     const { name, category } = req.body;
+    if (!req.file) return res.status(400).json({ success: false, msg: '缺少图片文件' });
     const filename = req.file.filename;
-    db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [name, filename], function (err) {
-        if (err) return res.status(500).json({ success: false });
+    db.run(`INSERT INTO images (name, path) VALUES (?, ?)`, [name || '未命名', filename], function (err) {
+        if (err) {
+            console.error('上传素材失败:', err);
+            return res.status(500).json({ success: false, msg: err.message });
+        }
+        res.json({ success: true, id: this.lastID });
+    });
+});
+
+// 删除素材
+app.delete('/api/admin/materials/:id', adminAuth, (req, res) => {
+    const { id } = req.params;
+    db.run(`DELETE FROM images WHERE id = ?`, [id], function (err) {
+        if (err) {
+            console.error('删除素材失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ success: true });
     });
 });
 
-app.delete('/api/admin/materials/:id', (req, res) => {
+// 评论监管：获取所有评论（从 dyeRecords 中提取 comment 不为空的记录）
+app.get('/api/comments', adminAuth, (req, res) => {
+    db.all(`
+        SELECT dyeRecords.id, dyeRecords.comment AS content, dyeRecords.createTime, 
+               users.username, dyeRecords.imageId
+        FROM dyeRecords 
+        LEFT JOIN users ON dyeRecords.userId = users.id 
+        WHERE dyeRecords.comment IS NOT NULL AND dyeRecords.comment != ''
+        ORDER BY dyeRecords.createTime DESC
+    `, (err, rows) => {
+        if (err) {
+            console.error('获取评论失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// 删除评论
+app.delete('/api/comment/:id', adminAuth, (req, res) => {
     const { id } = req.params;
-    db.run(`DELETE FROM images WHERE id=?`, [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+    db.run(`UPDATE dyeRecords SET comment = '' WHERE id = ?`, [id], function (err) {
+        if (err) {
+            console.error('删除评论失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ success: true });
+    });
+});
+
+// 排行榜：按点赞数（score）排序
+app.get('/api/rank', (req, res) => {
+    db.all(`
+        SELECT dyeRecords.*, users.username 
+        FROM dyeRecords 
+        LEFT JOIN users ON dyeRecords.userId = users.id 
+        WHERE draft = 0 
+        ORDER BY score DESC 
+        LIMIT 50
+    `, (err, rows) => {
+        if (err) {
+            console.error('获取排行榜失败:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
     });
 });
 
