@@ -776,6 +776,7 @@
                     messages: loadMessages
                 };
                 if (actions[tab]) actions[tab]();
+                if (tab === 'drafts') loadDrafts();
             };
 
             // ========== 作品（我的作品） ==========
@@ -784,6 +785,8 @@
                 if (!currentUser) return;
                 try {
                     const works = await request(`/api/my-works?userId=${currentUser.id}`);
+                    console.log('获取到的作品:', works);  // 添加调试日志
+                    console.log('当前用户ID:', currentUser.id);  // 确认用户ID
                     if (!works.length) {
                         grid.innerHTML = '<div class="empty">暂无作品，快去染色工坊创作吧～</div>';
                         return;
@@ -795,9 +798,9 @@
                                 <div class="work-name" onclick="viewWork('${w.id}')">${w.title || '未命名'}</div>
                                 <div class="work-data"><span>👁 ${w.views || 0}</span><span>👍 ${w.likes || 0}</span></div>
                                 <div class="work-actions">
-                                    <button class="btn-small btn-view" onclick="viewWork('${work.id}')">查看</button>
-                                    <button class="btn-small btn-edit" onclick="editWorkName('${work.id}', '${work.title}')">重命名</button>
-                                    <button class="btn-small btn-delete" onclick="deleteWork('${work.id}')">删除</button>
+                                    <button class="btn-small btn-view" onclick="viewWork('${w.id}')">查看</button>
+                                    <button class="btn-small btn-edit" onclick="editWorkName('${w.id}', '${w.title}')">重命名</button>
+                                    <button class="btn-small btn-delete" onclick="deleteWork('${w.id}')">删除</button>
                                 </div>
                             </div>
                         </div>`).join('');
@@ -872,32 +875,68 @@
                 } catch (e) { alert('删除失败'); }
             };
 
-            // ========== 草稿 ==========
+            // 加载我的草稿
             async function loadDrafts() {
                 const grid = document.getElementById('draftsGrid');
                 if (!currentUser) return;
                 try {
-                    const drafts = await request(`/api/my-drafts?userId=${currentUser.id}`);
-                    if (!drafts.length) { grid.innerHTML = '<div class="empty">暂无草稿</div>'; return; }
+                    const res = await fetch(`/api/my-drafts?userId=${currentUser.id}`);
+                    const drafts = await res.json();
+                    if (!drafts.length) {
+                        grid.innerHTML = '<div class="empty">暂无草稿</div>';
+                        return;
+                    }
                     grid.innerHTML = drafts.map(d => `
-                        <div class="work-card">
-                            <img src="${d.imageUrl || d.img || ''}" class="work-img">
-                            <div class="work-info">
-                                <div class="work-name">${d.title || '草稿'}</div>
-                                <div class="work-data"><span>💾草稿</span><span>${new Date(d.createTime).toLocaleDateString()}</span></div>
-                                <div class="work-actions">
-                                    <button class="btn-small btn-edit" onclick="continueDraft('${d.id}')">继续</button>
-                                    <button class="btn-small btn-delete" onclick="deleteDraft('${d.id}')">删除</button>
-                                </div>
-                            </div>
-                        </div>`).join('');
-                } catch (e) { grid.innerHTML = '<div class="empty">加载失败</div>'; }
+            <div class="work-card">
+                <img src="${d.colors || d.img}" class="work-img" onclick="continueDraft('${d.id}')">
+                <div class="work-info">
+                    <div class="work-name">${d.title || '未命名草稿'}</div>
+                    <div class="work-data"><span>💾草稿</span><span>${new Date(d.createTime).toLocaleDateString()}</span></div>
+                    <div class="work-actions">
+                        <button class="btn-small btn-edit" onclick="continueDraft('${d.id}')">继续</button>
+                        <button class="btn-small btn-delete" onclick="deleteDraft('${d.id}')">删除</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+                } catch (e) {
+                    grid.innerHTML = '<div class="empty">加载草稿失败</div>';
+                }
             }
-            window.continueDraft = (id) => window.location.href = `染色界面.html?draftId=${id}`;
-            window.deleteDraft = async (id) => {
-                if (!confirm('删除草稿？')) return;
-                await request(`/api/drafts/${id}`, { method: 'DELETE' });
-                loadDrafts();
+            // 继续编辑草稿
+            window.continueDraft = function (draftId) {
+                // 从当前显示的草稿列表中查找
+                const drafts = JSON.parse(localStorage.getItem('tempDrafts') || '[]');
+                // 或者重新从服务器获取（推荐）
+                fetch(`/api/my-drafts?userId=${currentUser.id}`)
+                    .then(res => res.json())
+                    .then(drafts => {
+                        const draft = drafts.find(d => d.id == draftId);
+                        if (draft && draft.colors) {
+                            // 跳转到染色界面，并传递草稿数据
+                            localStorage.setItem('currentDraft', JSON.stringify(draft));
+                            window.location.href = '染色界面.html?mode=draft';
+                        } else {
+                            alert('草稿数据无效');
+                        }
+                    })
+                    .catch(() => alert('加载草稿失败'));
+            };
+
+            // 删除草稿
+            window.deleteDraft = async function (id) {
+                if (!confirm('确定删除这个草稿？')) return;
+                try {
+                    const res = await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) {
+                        loadDrafts();
+                    } else {
+                        alert('删除失败');
+                    }
+                } catch (e) {
+                    alert('网络错误');
+                }
             };
 
             // ========== 收到的评论（模拟数据，可对接后端） ==========

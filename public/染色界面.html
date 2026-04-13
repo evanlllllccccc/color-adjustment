@@ -497,6 +497,7 @@
                 <button class="action-btn btn-clear" id="btnClear">🧹 清空染色</button>
                 <button class="action-btn btn-rename" id="btnRename">✏️ 命名作品</button>
                 <button class="action-btn btn-save" id="btnSave">💾 保存到云端</button>
+                <button class="action-btn btn-draft" id="btnSaveDraft" style="background:#a09b8c;">📄 存为草稿</button>
                 <button class="action-btn btn-export" id="btnExport">⬇️ 导出图片</button>
             </div>
         </section>
@@ -1119,6 +1120,33 @@
                 }
             });
 
+            // 存为草稿按钮
+            document.getElementById('btnSaveDraft').addEventListener('click', async () => {
+                if (!currentUser) { alert('请先登录'); return; }
+                const dataURL = canvas.toDataURL('image/png');
+                const payload = {
+                    userId: currentUser.id,
+                    title: workName,
+                    imageData: dataURL,
+                    isPublic: false   // 草稿
+                };
+                try {
+                    const res = await fetch('/api/works', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('草稿已保存');
+                    } else {
+                        alert('保存失败: ' + data.msg);
+                    }
+                } catch (e) {
+                    alert('网络错误，保存失败');
+                }
+            });
+
             // ========== 初始化 ==========
             (async function init() {
                 initCanvas();
@@ -1131,6 +1159,16 @@
                 }
                 document.querySelector('[data-tab="red"]').classList.add('active');
                 renderColorGrid('red');
+                // 检查是否从草稿继续
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'draft') {
+                    const draft = JSON.parse(localStorage.getItem('currentDraft') || 'null');
+                    if (draft && draft.colors) {
+                        loadBaseImage(draft.colors);
+                        workName = draft.title || '草稿';
+                        localStorage.removeItem('currentDraft'); // 清除临时数据
+                    }
+                }
             })();
         })();
     </script>

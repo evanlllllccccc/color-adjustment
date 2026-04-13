@@ -486,15 +486,16 @@
         try {
             const res = await fetch(API + '/api/works/public');
             const data = await res.json();
+            console.log('作品库原始数据:', data);  // 添加调试
             // 兼容返回格式：可能为 { works: [...] } 或直接数组
             const works = data.works || data || [];
-            
+            console.log('处理后的works:', works);  // 添加调试
             allWorks = works.map(work => ({
                 id: work.id,
                 title: work.title || '未命名作品',
                 img: work.imageUrl || work.img || work.colors, // 兼容多种字段
                 author: work.authorName || work.username || work.author?.account || '匿名',
-                authorAvatar: work.author?.avatar || `https://picsum.photos/200/200?random=${work.id}`,
+                authorAvatar: work.authorAvatar || work.author?.avatar || `https://picsum.photos/200/200?random=${work.id}`,
                 views: work.views || 0,
                 likes: work.likes || work.score || 0,
                 time: work.createdAt || work.time || new Date().toISOString(),
