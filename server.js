@@ -626,15 +626,6 @@ app.get('/api/rank', (req, res) => {
     });
 });
 
-// ====================== 启动 ======================
-const PORT = process.env.PORT || 3000;
-initDatabase().then(() => {
-    app.listen(PORT, () => console.log(`🚀 服务器运行在端口 ${PORT}`));
-}).catch(err => {
-    console.error('启动失败:', err);
-    process.exit(1);
-});
-
 // 调试接口：查看数据库状态
 app.get('/api/debug/db', (req, res) => {
     db.all(`SELECT name FROM sqlite_master WHERE type='table'`, [], (err, tables) => {
@@ -664,4 +655,13 @@ app.get('/api/debug/works', (req, res) => {
         if (err) return res.json({ error: err.message });
         res.json({ count: rows.length, rows });
     });
+
+// ====================== 启动 ======================
+const PORT = process.env.PORT || 3000;
+initDatabase().then(() => {
+    app.listen(PORT, () => console.log(`🚀 服务器运行在端口 ${PORT}`));
+}).catch(err => {
+    console.error('启动失败:', err);
+    process.exit(1);
+});
 });
