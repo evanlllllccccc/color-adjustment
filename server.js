@@ -634,3 +634,34 @@ initDatabase().then(() => {
     console.error('启动失败:', err);
     process.exit(1);
 });
+
+// 调试接口：查看数据库状态
+app.get('/api/debug/db', (req, res) => {
+    db.all(`SELECT name FROM sqlite_master WHERE type='table'`, [], (err, tables) => {
+        if (err) return res.json({ error: err.message });
+
+        const result = { tables: [] };
+        let pending = tables.length;
+
+        if (pending === 0) return res.json(result);
+
+        tables.forEach(table => {
+            db.get(`SELECT COUNT(*) as count FROM ${table.name}`, [], (err, row) => {
+                result.tables.push({
+                    name: table.name,
+                    count: err ? 0 : row.count
+                });
+                pending--;
+                if (pending === 0) res.json(result);
+            });
+        });
+    });
+});
+
+// 调试接口：查看 dyeRecords 数据
+app.get('/api/debug/works', (req, res) => {
+    db.all(`SELECT id, title, draft, userId, colors IS NOT NULL as has_colors, createTime FROM dyeRecords LIMIT 10`, [], (err, rows) => {
+        if (err) return res.json({ error: err.message });
+        res.json({ count: rows.length, rows });
+    });
+});
