@@ -327,14 +327,30 @@ app.delete('/api/drafts/:id', (req, res) => {
 });
 
 app.post('/api/works', (req, res) => {
+    console.log('收到保存请求:', req.body);  // 调试日志
+
     const { userId, imageId, title, imageData, isPublic } = req.body;
+
+    // 验证必填字段
+    if (!userId) return res.status(400).json({ success: false, msg: '缺少userId' });
+    if (!imageData) return res.status(400).json({ success: false, msg: '缺少图片数据' });
+
     const draft = isPublic ? 0 : 1;
     const time = new Date().toISOString();
+
+    console.log('准备插入:', { userId, title, draft, hasImage: !!imageData });  // 调试
+
     db.run(`INSERT INTO dyeRecords (userId, imageId, title, colors, draft, createTime) VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, imageId, title, imageData, draft, time], function (err) {
-            if (err) return res.status(500).json({ success: false, msg: err.message });
+        [userId, imageId || null, title, imageData, draft, time],
+        function (err) {
+            if (err) {
+                console.error('插入失败:', err);  // 调试日志
+                return res.status(500).json({ success: false, msg: err.message });
+            }
+            console.log('插入成功, ID:', this.lastID);  // 调试日志
             res.json({ success: true, id: this.lastID });
-        });
+        }
+    );
 });
 
 // ========== 用户上传图片 ==========
