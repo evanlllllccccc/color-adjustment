@@ -655,7 +655,7 @@ app.get('/api/debug/works', (req, res) => {
         if (err) return res.json({ error: err.message });
         res.json({ count: rows.length, rows });
     });
-
+});
 // ====================== 启动 ======================
 const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
@@ -663,5 +663,4 @@ initDatabase().then(() => {
 }).catch(err => {
     console.error('启动失败:', err);
     process.exit(1);
-});
 });
