@@ -747,7 +747,7 @@
 
     <script>
         // 后端API地址
-        const API_BASE_URL = 'https://color-adjustment-production.up.railway.app';
+        const API_BASE_URL = '';
 
         let currentTab = 'all';
         let allWorks = [];
@@ -776,7 +776,7 @@
         async function loadRankings() {
             try {
                 // 从后端API获取所有作品
-                const response = await fetch(`${API_BASE_URL}/api/works`);
+                const response = await fetch(`${API_BASE_URL}/api/works/public`);
                 if (!response.ok) throw new Error('获取作品失败');
 
                 const works = await response.json();
