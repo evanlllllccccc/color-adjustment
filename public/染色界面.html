@@ -581,245 +581,212 @@
 
     <script>
         (function () {
-            // ---------- 后端配置 ----------
-            const API_BASE = ' ';
-            const authToken = localStorage.getItem('authToken');
-            let currentUser = null;
-
-            // ---------- 色彩数据 (请将原有的 traditionalColors 对象粘贴在此处) ----------
-            // 因篇幅限制，此处省略颜色数据，请将完整的 traditionalColors 粘贴于此
-            const traditionalColors = {
-                red: [
-                    { name: "胭脂雪", hex: "#F1DEEC" }, { name: "杏花", hex: "#FADCE9" }, { name: "粉红", hex: "#EFC4CE" },
-                    { name: "粉米", hex: "#EFC4CE" }, { name: "桃夭", hex: "#F6BEC8" }, { name: "姜红", hex: "#EEB8C3" },
-                    { name: "水红", hex: "#ECB0C1" }, { name: "彤管", hex: "#E2A2AC" }, { name: "莲红", hex: "#D9A0B3" },
-                    { name: "缥缘", hex: "#CE8892" }, { name: "紫梅", hex: "#BB7A8C" }, { name: "绾色", hex: "#B27777" },
-                    { name: "银红", hex: "#E7CAD3" }, { name: "暖暖粉", hex: "#F6BCC0" }, { name: "肉红", hex: "#E5B7B7" },
-                    { name: "杨妃", hex: "#F091A0" }, { name: "长春", hex: "#DC6B82" }, { name: "渥赭", hex: "#DD6B7B" },
-                    { name: "红獭", hex: "#CD7372" }, { name: "美人祭", hex: "#C35C6A" }, { name: "牙绯", hex: "#C35C5D" },
-                    { name: "唇脂", hex: "#C25160" }, { name: "鞋红", hex: "#B04552" }, { name: "蚩尤旗", hex: "#A85858" },
-                    { name: "盈盈", hex: "#F9D3E3" }, { name: "豇豆红", hex: "#ED9DB2" }, { name: "芍药红", hex: "#EBA0B3" },
-                    { name: "桃红", hex: "#F091A1" }, { name: "霞光红", hex: "#EF82A0" }, { name: "淡绛红", hex: "#EC7696" },
-                    { name: "苏梅", hex: "#DD7694" }, { name: "梅红", hex: "#DA6D83" }, { name: "莲瓣红", hex: "#EA517F" },
-                    { name: "松叶牡丹红", hex: "#EB3C70" }, { name: "娇红", hex: "#D1254F" }, { name: "朱孔阳", hex: "#B81A35" },
-                    { name: "靠红", hex: "#F3C2D9" }, { name: "菡萏", hex: "#EF92B5" }, { name: "龙膏烛", hex: "#DE82A7" },
-                    { name: "黪紫", hex: "#CC73A0" }, { name: "胭脂水", hex: "#B95A89" }, { name: "琅玕紫", hex: "#CB5C83" },
-                    { name: "初荷红", hex: "#E16C96" }, { name: "丹紫红", hex: "#D2568C" }, { name: "莲红", hex: "#C1527F" },
-                    { name: "红踯躅", hex: "#C14379" }, { name: "胭脂紫", hex: "#B0436F" }, { name: "洋葱紫", hex: "#A8456B" },
-                    { name: "小红", hex: "#E67762" }, { name: "抹红", hex: "#DE694C" }, { name: "驿衣", hex: "#EA5532" },
-                    { name: "朱膘", hex: "#E94721" }, { name: "鹤顶红", hex: "#D24735" }, { name: "杏红", hex: "#CF3D15" },
-                    { name: "珊瑚", hex: "#C4462F" }, { name: "银朱", hex: "#D12920" }, { name: "火赫", hex: "#BF301E" },
-                    { name: "珊瑚赫", hex: "#C12C1F" }, { name: "蕉红", hex: "#C8191D" }, { name: "牙红", hex: "#B01F24" },
-                    { name: "岱赭", hex: "#DD6B4F" }, { name: "赧炽", hex: "#CB523E" }, { name: "朱殷", hex: "#B93A26" },
-                    { name: "石榴裙", hex: "#B13B2E" }, { name: "绛红", hex: "#B02E28" }, { name: "赤缇", hex: "#BA5B49" },
-                    { name: "纁黄", hex: "#BA5140" }, { name: "朱草", hex: "#A64036" }, { name: "綪筏", hex: "#9E2A22" },
-                    { name: "朱湛", hex: "#95302E" }, { name: "朱樱", hex: "#8F1D22" }, { name: "大繎", hex: "#822327" },
-                    { name: "丹色", hex: "#D64241" }, { name: "翘红", hex: "#E9464D" }, { name: "朱砂", hex: "#D80835" },
-                    { name: "双红", hex: "#C02A45" }, { name: "胭脂", hex: "#B32142" }, { name: "红椒", hex: "#E02623" },
-                    { name: "丹枫", hex: "#D81918" }, { name: "丹罽", hex: "#E60012" }, { name: "丹腹", hex: "#C8161D" },
-                    { name: "胭脂虫", hex: "#AB1D22" }, { name: "水华朱", hex: "#A72126" }, { name: "顺圣", hex: "#7C191E" },
-                    { name: "茜红", hex: "#CC5D4E" }, { name: "绯红", hex: "#BF5552" }, { name: "佛赤", hex: "#8F3D2C" },
-                    { name: "烟红", hex: "#902E22" }, { name: "枣红", hex: "#8A2623" }, { name: "荔色", hex: "#89267C" },
-                    { name: "朱红", hex: "#711318" }, { name: "不老红", hex: "#702029" }, { name: "爵头", hex: "#631216" },
-                    { name: "燃红", hex: "#5D181A" }, { name: "木兰", hex: "#662B1F" }, { name: "麒麟竭", hex: "#4C1E1A" }
+            // ========== 配置 ==========
+            const API_BASE = '';
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+             // 中国传统色完整数据
+             const traditionalColors = {
+                    red: [
+                {name: "胭脂雪", hex: "#F1DEEC" }, {name: "杏花", hex: "#FADCE9" }, {name: "粉红", hex: "#EFC4CE" },
+                {name: "粉米", hex: "#EFC4CE" }, {name: "桃夭", hex: "#F6BEC8" }, {name: "姜红", hex: "#EEB8C3" },
+                {name: "水红", hex: "#ECB0C1" }, {name: "彤管", hex: "#E2A2AC" }, {name: "莲红", hex: "#D9A0B3" },
+                {name: "缥缘", hex: "#CE8892" }, {name: "紫梅", hex: "#BB7A8C" }, {name: "绾色", hex: "#B27777" },
+                {name: "银红", hex: "#E7CAD3" }, {name: "暖暖粉", hex: "#F6BCC0" }, {name: "肉红", hex: "#E5B7B7" },
+                {name: "杨妃", hex: "#F091A0" }, {name: "长春", hex: "#DC6B82" }, {name: "渥赭", hex: "#DD6B7B" },
+                {name: "红獭", hex: "#CD7372" }, {name: "美人祭", hex: "#C35C6A" }, {name: "牙绯", hex: "#C35C5D" },
+                {name: "唇脂", hex: "#C25160" }, {name: "鞋红", hex: "#B04552" }, {name: "蚩尤旗", hex: "#A85858" },
+                {name: "盈盈", hex: "#F9D3E3" }, {name: "豇豆红", hex: "#ED9DB2" }, {name: "芍药红", hex: "#EBA0B3" },
+                {name: "桃红", hex: "#F091A1" }, {name: "霞光红", hex: "#EF82A0" }, {name: "淡绛红", hex: "#EC7696" },
+                {name: "苏梅", hex: "#DD7694" }, {name: "梅红", hex: "#DA6D83" }, {name: "莲瓣红", hex: "#EA517F" },
+                {name: "松叶牡丹红", hex: "#EB3C70" }, {name: "娇红", hex: "#D1254F" }, {name: "朱孔阳", hex: "#B81A35" },
+                {name: "靠红", hex: "#F3C2D9" }, {name: "菡萏", hex: "#EF92B5" }, {name: "龙膏烛", hex: "#DE82A7" },
+                {name: "黪紫", hex: "#CC73A0" }, {name: "胭脂水", hex: "#B95A89" }, {name: "琅玕紫", hex: "#CB5C83" },
+                {name: "初荷红", hex: "#E16C96" }, {name: "丹紫红", hex: "#D2568C" }, {name: "莲红", hex: "#C1527F" },
+                {name: "红踯躅", hex: "#C14379" }, {name: "胭脂紫", hex: "#B0436F" }, {name: "洋葱紫", hex: "#A8456B" },
+                {name: "小红", hex: "#E67762" }, {name: "抹红", hex: "#DE694C" }, {name: "驿衣", hex: "#EA5532" },
+                {name: "朱膘", hex: "#E94721" }, {name: "鹤顶红", hex: "#D24735" }, {name: "杏红", hex: "#CF3D15" },
+                {name: "珊瑚", hex: "#C4462F" }, {name: "银朱", hex: "#D12920" }, {name: "火赫", hex: "#BF301E" },
+                {name: "珊瑚赫", hex: "#C12C1F" }, {name: "蕉红", hex: "#C8191D" }, {name: "牙红", hex: "#B01F24" },
+                {name: "岱赭", hex: "#DD6B4F" }, {name: "赧炽", hex: "#CB523E" }, {name: "朱殷", hex: "#B93A26" },
+                {name: "石榴裙", hex: "#B13B2E" }, {name: "绛红", hex: "#B02E28" }, {name: "赤缇", hex: "#BA5B49" },
+                {name: "纁黄", hex: "#BA5140" }, {name: "朱草", hex: "#A64036" }, {name: "綪筏", hex: "#9E2A22" },
+                {name: "朱湛", hex: "#95302E" }, {name: "朱樱", hex: "#8F1D22" }, {name: "大繎", hex: "#822327" },
+                {name: "丹色", hex: "#D64241" }, {name: "翘红", hex: "#E9464D" }, {name: "朱砂", hex: "#D80835" },
+                {name: "双红", hex: "#C02A45" }, {name: "胭脂", hex: "#B32142" }, {name: "红椒", hex: "#E02623" },
+                {name: "丹枫", hex: "#D81918" }, {name: "丹罽", hex: "#E60012" }, {name: "丹腹", hex: "#C8161D" },
+                {name: "胭脂虫", hex: "#AB1D22" }, {name: "水华朱", hex: "#A72126" }, {name: "顺圣", hex: "#7C191E" },
+                {name: "茜红", hex: "#CC5D4E" }, {name: "绯红", hex: "#BF5552" }, {name: "佛赤", hex: "#8F3D2C" },
+                {name: "烟红", hex: "#902E22" }, {name: "枣红", hex: "#8A2623" }, {name: "荔色", hex: "#89267C" },
+                {name: "朱红", hex: "#711318" }, {name: "不老红", hex: "#702029" }, {name: "爵头", hex: "#631216" },
+                {name: "燃红", hex: "#5D181A" }, {name: "木兰", hex: "#662B1F" }, {name: "麒麟竭", hex: "#4C1E1A" }
                 ],
                 orange: [
-                    { name: "扶光", hex: "#F0C2A2" }, { name: "如梦令", hex: "#DDBB99" }, { name: "芸黄", hex: "#D2A36C" },
-                    { name: "金埒", hex: "#BE9457" }, { name: "蛾黄", hex: "#BE8A2F" }, { name: "密陀僧", hex: "#B3934B" },
-                    { name: "雌黄", hex: "#B4884D" }, { name: "椒房", hex: "#DB9C5E" }, { name: "黄不老", hex: "#DB9B34" },
-                    { name: "杏子", hex: "#DA9233" }, { name: "郁金裙", hex: "#D08635" }, { name: "柘黄", hex: "#C67915" },
-                    { name: "蛋壳黄", hex: "#F8C387" }, { name: "玫瑰粉", hex: "#F8B37F" }, { name: "缲色", hex: "#EFAB84" },
-                    { name: "海螺橙", hex: "#F0945D" }, { name: "鲑鱼红", hex: "#F09C5A" }, { name: "鹿皮褐", hex: "#D99156" },
-                    { name: "库金", hex: "#E18A3B" }, { name: "红友", hex: "#D9883D" }, { name: "醉瓜肉", hex: "#DB8540" },
-                    { name: "麂棕", hex: "#DE7622" }, { name: "媚蝶", hex: "#BC6E37" }, { name: "黄流", hex: "#9F6027" },
-                    { name: "骍刚", hex: "#F5B087" }, { name: "晨曦红", hex: "#EA8958" }, { name: "美人焦橙", hex: "#FA7E23" },
-                    { name: "金红", hex: "#EE781F" }, { name: "菠萝红", hex: "#FC7930" }, { name: "金莲花橙", hex: "#F86B1D" },
-                    { name: "蟹壳红", hex: "#F27635" }, { name: "陶瓷红", hex: "#E16723" }, { name: "余烬红", hex: "#CF7543" },
-                    { name: "火砖红", hex: "#CD6227" }, { name: "光明砂", hex: "#CC5D20" }, { name: "靺鞨", hex: "#9F5221" },
-                    { name: "淡藏花红", hex: "#F6AD8F" }, { name: "野蔷薇红", hex: "#FB9968" }, { name: "赪霞", hex: "#F18F60" },
-                    { name: "瓜瓤红", hex: "#F68C60" }, { name: "赪尾", hex: "#EF845D" }, { name: "朱柿", hex: "#ED6D46" },
-                    { name: "苕荣", hex: "#ED6D31" }, { name: "金驼", hex: "#E46828" }, { name: "铁棕", hex: "#D85916" },
-                    { name: "黄丹", hex: "#EA5514" }, { name: "落霞红", hex: "#CF4813" }, { name: "橘红", hex: "#BB5133" }
+                {name: "扶光", hex: "#F0C2A2" }, {name: "如梦令", hex: "#DDBB99" }, {name: "芸黄", hex: "#D2A36C" },
+                {name: "金埒", hex: "#BE9457" }, {name: "蛾黄", hex: "#BE8A2F" }, {name: "密陀僧", hex: "#B3934B" },
+                {name: "雌黄", hex: "#B4884D" }, {name: "椒房", hex: "#DB9C5E" }, {name: "黄不老", hex: "#DB9B34" },
+                {name: "杏子", hex: "#DA9233" }, {name: "郁金裙", hex: "#D08635" }, {name: "柘黄", hex: "#C67915" },
+                {name: "蛋壳黄", hex: "#F8C387" }, {name: "玫瑰粉", hex: "#F8B37F" }, {name: "缲色", hex: "#EFAB84" },
+                {name: "海螺橙", hex: "#F0945D" }, {name: "鲑鱼红", hex: "#F09C5A" }, {name: "鹿皮褐", hex: "#D99156" },
+                {name: "库金", hex: "#E18A3B" }, {name: "红友", hex: "#D9883D" }, {name: "醉瓜肉", hex: "#DB8540" },
+                {name: "麂棕", hex: "#DE7622" }, {name: "媚蝶", hex: "#BC6E37" }, {name: "黄流", hex: "#9F6027" },
+                {name: "骍刚", hex: "#F5B087" }, {name: "晨曦红", hex: "#EA8958" }, {name: "美人焦橙", hex: "#FA7E23" },
+                {name: "金红", hex: "#EE781F" }, {name: "菠萝红", hex: "#FC7930" }, {name: "金莲花橙", hex: "#F86B1D" },
+                {name: "蟹壳红", hex: "#F27635" }, {name: "陶瓷红", hex: "#E16723" }, {name: "余烬红", hex: "#CF7543" },
+                {name: "火砖红", hex: "#CD6227" }, {name: "光明砂", hex: "#CC5D20" }, {name: "靺鞨", hex: "#9F5221" },
+                {name: "淡藏花红", hex: "#F6AD8F" }, {name: "野蔷薇红", hex: "#FB9968" }, {name: "赪霞", hex: "#F18F60" },
+                {name: "瓜瓤红", hex: "#F68C60" }, {name: "赪尾", hex: "#EF845D" }, {name: "朱柿", hex: "#ED6D46" },
+                {name: "苕荣", hex: "#ED6D31" }, {name: "金驼", hex: "#E46828" }, {name: "铁棕", hex: "#D85916" },
+                {name: "黄丹", hex: "#EA5514" }, {name: "落霞红", hex: "#CF4813" }, {name: "橘红", hex: "#BB5133" }
                 ],
                 yellow: [
-                    { name: "半见", hex: "#FFFBC7" }, { name: "女贞黄", hex: "#F7EEAD" }, { name: "莺儿", hex: "#EBE1A9" },
-                    { name: "绢纨", hex: "#ECE093" }, { name: "禹余粮", hex: "#E1D279" }, { name: "田赤", hex: "#E1D384" },
-                    { name: "姜黄", hex: "#D6C560" }, { name: "雅黄", hex: "#D6BC46" }, { name: "黄封", hex: "#CAB272" },
-                    { name: "栾华", hex: "#C0AD5E" }, { name: "大赤", hex: "#AA9649" }, { name: "苍黄", hex: "#B6A014" },
-                    { name: "黄白游", hex: "#FFF799" }, { name: "松花", hex: "#FFEE6F" }, { name: "细叶", hex: "#ECD452" },
-                    { name: "槐黄", hex: "#D6BB38" }, { name: "草黄", hex: "#D2B42C" }, { name: "绮黄", hex: "#DAA91F" },
-                    { name: "金黄", hex: "#D3A117" }, { name: "鞠衣", hex: "#D3A237" }, { name: "太一余粮", hex: "#D5B45C" },
-                    { name: "秋香", hex: "#BF9C46" }, { name: "香色", hex: "#B69833" }, { name: "老茯神", hex: "#AA8534" },
-                    { name: "桑蕾", hex: "#EAD89A" }, { name: "茉莉黄", hex: "#F8DF72" }, { name: "葵扇黄", hex: "#F8D86A" },
-                    { name: "油菜花黄", hex: "#FBDA41" }, { name: "大喵黄", hex: "#FCD337" }, { name: "柑黄", hex: "#F4CF39" },
-                    { name: "雌黄", hex: "#EAC21D" }, { name: "明黄", hex: "#FCC800" }, { name: "藤黄", hex: "#E9BA20" },
-                    { name: "荩草", hex: "#F1BD3F" }, { name: "蜜蜡", hex: "#E7B140" }, { name: "黄河琉璃", hex: "#E5A84B" },
-                    { name: "杏仁黄", hex: "#F7E8AA" }, { name: "黄栗留", hex: "#FEDC5E" }, { name: "嫩鹅黄", hex: "#F2C867" },
-                    { name: "栀子", hex: "#FAC03D" }, { name: "炒米", hex: "#E7B864" }, { name: "黄琉璃", hex: "#E5A94B" },
-                    { name: "紫磨金", hex: "#DDA541" }, { name: "后土", hex: "#E1A34B" }, { name: "琥珀", hex: "#D29836" },
-                    { name: "桂黄", hex: "#EDA01F" }, { name: "雄黄", hex: "#F3993A" }, { name: "杏黄", hex: "#D98700" }
+                {name: "半见", hex: "#FFFBC7" }, {name: "女贞黄", hex: "#F7EEAD" }, {name: "莺儿", hex: "#EBE1A9" },
+                {name: "绢纨", hex: "#ECE093" }, {name: "禹余粮", hex: "#E1D279" }, {name: "田赤", hex: "#E1D384" },
+                {name: "姜黄", hex: "#DGC560" }, {name: "雅黄", hex: "#D6BC46" }, {name: "黄封", hex: "#CAB272" },
+                {name: "栾华", hex: "#C0AD5E" }, {name: "大赤", hex: "#AA9649" }, {name: "苍黄", hex: "#BGA014" },
+                {name: "黄白游", hex: "#FFF799" }, {name: "松花", hex: "#FFEE6F" }, {name: "细叶", hex: "#ECD452" },
+                {name: "槐黄", hex: "#D6BB38" }, {name: "草黄", hex: "#D2B42C" }, {name: "绮黄", hex: "#DAA91F" },
+                {name: "金黄", hex: "#D3A117" }, {name: "鞠衣", hex: "#D3A237" }, {name: "太一余粮", hex: "#D5B45C" },
+                {name: "秋香", hex: "#BF9C46" }, {name: "香色", hex: "#B69833" }, {name: "老茯神", hex: "#AA8534" },
+                {name: "桑蕾", hex: "#EAD89A" }, {name: "茉莉黄", hex: "#F8DF72" }, {name: "葵扇黄", hex: "#F8D86A" },
+                {name: "油菜花黄", hex: "#FBDA41" }, {name: "大喵黄", hex: "#FCD337" }, {name: "柑黄", hex: "#F4CF39" },
+                {name: "雌黄", hex: "#EAC21D" }, {name: "明黄", hex: "#FCC800" }, {name: "藤黄", hex: "#E9BA20" },
+                {name: "荩草", hex: "#F1BD3F" }, {name: "蜜蜡", hex: "#E7B140" }, {name: "黄河琉璃", hex: "#E5A84B" },
+                {name: "杏仁黄", hex: "#F7E8AA" }, {name: "黄栗留", hex: "#FEDC5E" }, {name: "嫩鹅黄", hex: "#F2C867" },
+                {name: "栀子", hex: "#FAC03D" }, {name: "炒米", hex: "#E7B864" }, {name: "黄琉璃", hex: "#E5A94B" },
+                {name: "紫磨金", hex: "#DDA541" }, {name: "后土", hex: "#E1A34B" }, {name: "琥珀", hex: "#D29836" },
+                {name: "桂黄", hex: "#EDA01F" }, {name: "雄黄", hex: "#F3993A" }, {name: "杏黄", hex: "#D98700" }
                 ],
                 green: [
-                    { name: "断肠", hex: "#E8EDB9" }, { name: "麴尘", hex: "#C0D9D9" }, { name: "欧碧", hex: "#C0D695" },
-                    { name: "春辰", hex: "#A9BE7B" }, { name: "苍葭", hex: "#A8BF8F" }, { name: "兰苕", hex: "#A8B77C" },
-                    { name: "碧滋", hex: "#90A70D" }, { name: "渌波", hex: "#9BB496" }, { name: "青楸", hex: "#81A380" },
-                    { name: "雀梅", hex: "#788A6F" }, { name: "青梅", hex: "#778A77" }, { name: "油绿", hex: "#5D7259" },
-                    { name: "无心绿", hex: "#BFD1B2" }, { name: "绿矾", hex: "#B4BDA0" }, { name: "艾绿", hex: "#9DAA6C" },
-                    { name: "梅子青", hex: "#A9BD70" }, { name: "苹果", hex: "#A0BF52" }, { name: "笋绿", hex: "#84A740" },
-                    { name: "碧山", hex: "#779649" }, { name: "秋葵", hex: "#6B8C32" }, { name: "葱倩", hex: "#6C8650" },
-                    { name: "石发", hex: "#6A8D52" }, { name: "漆姑", hex: "#5D8351" }, { name: "芰荷", hex: "#4F794A" },
-                    { name: "嘉陵水绿", hex: "#ADD5A2" }, { name: "鹦哥绿", hex: "#A5D1B5" }, { name: "水绿", hex: "#8DB799" },
-                    { name: "麦绿", hex: "#8EAF8C" }, { name: "豆绿", hex: "#91AE84" }, { name: "葱绿", hex: "#799A64" },
-                    { name: "庭芜绿", hex: "#68945C" }, { name: "四绿", hex: "#6BB392" }, { name: "三绿", hex: "#53976F" },
-                    { name: "品绿", hex: "#1C8D6C" }, { name: "孔雀绿", hex: "#007D62" }, { name: "官绿", hex: "#2A6E3F" },
-                    { name: "京绿", hex: "#468C37" }, { name: "明绿", hex: "#49864D" }, { name: "翠微", hex: "#4C8045" },
-                    { name: "秧色", hex: "#507936" }, { name: "竹绿", hex: "#357944" }, { name: "青青", hex: "#4F6F46" },
-                    { name: "翠虬", hex: "#446A37" }, { name: "松绿", hex: "#3D6036" }, { name: "莓莓", hex: "#4E6548" },
-                    { name: "砂绿", hex: "#425539" }, { name: "螺青", hex: "#3F503B" }, { name: "结绿", hex: "#555F4D" }
+                {name: "断肠", hex: "#E8EDB9" }, {name: "麴尘", hex: "#C0D9D9" }, {name: "欧碧", hex: "#C0D695" },
+                {name: "春辰", hex: "#A9BE7B" }, {name: "苍葭", hex: "#A8BF8F" }, {name: "兰苕", hex: "#A8B77C" },
+                {name: "碧滋", hex: "#90A70D" }, {name: "渌波", hex: "#9BB496" }, {name: "青楸", hex: "#81A380" },
+                {name: "雀梅", hex: "#788A6F" }, {name: "青梅", hex: "#778A77" }, {name: "油绿", hex: "#5D7259" },
+                {name: "无心绿", hex: "#BFD1B2" }, {name: "绿矾", hex: "#B4BDA0" }, {name: "艾绿", hex: "#9DAA6C" },
+                {name: "梅子青", hex: "#A9BD70" }, {name: "苹果", hex: "#A0BF52" }, {name: "笋绿", hex: "#84A740" },
+                {name: "碧山", hex: "#779649" }, {name: "秋葵", hex: "#6B8C32" }, {name: "葱倩", hex: "#6C8650" },
+                {name: "石发", hex: "#6A8D52" }, {name: "漆姑", hex: "#5D8351" }, {name: "芰荷", hex: "#4F794A" },
+                {name: "嘉陵水绿", hex: "#ADD5A2" }, {name: "鹦哥绿", hex: "#A5D1B5" }, {name: "水绿", hex: "#8DB799" },
+                {name: "麦绿", hex: "#8EAF8C" }, {name: "豆绿", hex: "#91AE84" }, {name: "葱绿", hex: "#799A64" },
+                {name: "庭芜绿", hex: "#68945C" }, {name: "四绿", hex: "#6BB392" }, {name: "三绿", hex: "#53976F" },
+                {name: "品绿", hex: "#1C8D6C" }, {name: "孔雀绿", hex: "#007D62" }, {name: "官绿", hex: "#2A6E3F" },
+                {name: "京绿", hex: "#468C37" }, {name: "明绿", hex: "#49864D" }, {name: "翠微", hex: "#4C8045" },
+                {name: "秧色", hex: "#507936" }, {name: "竹绿", hex: "#357944" }, {name: "青青", hex: "#4F6F46" },
+                {name: "翠虬", hex: "#446A37" }, {name: "松绿", hex: "#3D6036" }, {name: "莓莓", hex: "#4E6548" },
+                {name: "砂绿", hex: "#425539" }, {name: "螺青", hex: "#3F503B" }, {name: "结绿", hex: "#555F4D" }
                 ],
                 cyan: [
-                    { name: "粉青", hex: "#C4DAD6" }, { name: "蛋青", hex: "#C3D9D6" }, { name: "粉绿", hex: "#B2C6BF" },
-                    { name: "醽醁", hex: "#A6BAB1" }, { name: "水色", hex: "#88ADA6" }, { name: "沧浪", hex: "#B1D5C8" },
-                    { name: "豆青", hex: "#A1BFB0" }, { name: "苍筤", hex: "#99BCAC" }, { name: "葱青", hex: "#8CB7A2" },
-                    { name: "缥碧", hex: "#80A492" }, { name: "翠涛", hex: "#819D8E" }, { name: "千山翠", hex: "#6B7D73" },
-                    { name: "海天蓝", hex: "#C6E6E8" }, { name: "縤牂", hex: "#88BFB8" }, { name: "二绿", hex: "#5DA39D" },
-                    { name: "铜青", hex: "#3D8E86" }, { name: "闪蓝", hex: "#7CABB1" }, { name: "正青", hex: "#6CA8AF" },
-                    { name: "扁青", hex: "#509296" }, { name: "法翠", hex: "#108B96" }, { name: "翠蓝", hex: "#41888A" },
-                    { name: "青鹱", hex: "#007175" }, { name: "纁色", hex: "#226B68" }, { name: "石绿", hex: "#206864" },
-                    { name: "天青", hex: "#C6D7DB" }, { name: "井天", hex: "#A4C9CC" }, { name: "西子", hex: "#87C0CA" },
-                    { name: "清水蓝", hex: "#93D5DC" }, { name: "松石", hex: "#75C1C4" }, { name: "天水碧", hex: "#5AA4AE" },
-                    { name: "瀑布蓝", hex: "#51C4D3" }, { name: "甸子蓝", hex: "#10AEC2" }, { name: "霁青", hex: "#63BBD0" },
-                    { name: "碧青", hex: "#5CB3CC" }, { name: "法蓝", hex: "#30AECF" }, { name: "胆矾蓝", hex: "#0F95B0" },
-                    { name: "卵色天", hex: "#C8D8E1" }, { name: "影青", hex: "#BDCBD2" }, { name: "白青", hex: "#98B6C2" },
-                    { name: "虾青", hex: "#94A9B8" }, { name: "竹月", hex: "#7F9FAF" }, { name: "空青", hex: "#6889F0" },
-                    { name: "太师青", hex: "#547689" }, { name: "虾壳青", hex: "#869D9D" }, { name: "晚波蓝", hex: "#648E93" },
-                    { name: "蜻蜓蓝", hex: "#3B818C" }, { name: "鱼师青", hex: "#32788A" }, { name: "青缟", hex: "#284852" }
+                {name: "粉青", hex: "#C4DAD6" }, {name: "蛋青", hex: "#C3D9D6" }, {name: "粉绿", hex: "#B2C6BF" },
+                {name: "醽醁", hex: "#A6BAB1" }, {name: "水色", hex: "#88ADA6" }, {name: "沧浪", hex: "#B1D5C8" },
+                {name: "豆青", hex: "#A1BFB0" }, {name: "苍筤", hex: "#99BCAC" }, {name: "葱青", hex: "#8CB7A2" },
+                {name: "缥碧", hex: "#80A492" }, {name: "翠涛", hex: "#819D8E" }, {name: "千山翠", hex: "#6B7D73" },
+                {name: "海天蓝", hex: "#C6E6E8" }, {name: "縤牂", hex: "#88BFB8" }, {name: "二绿", hex: "#5DA39D" },
+                {name: "铜青", hex: "#3D8E86" }, {name: "闪蓝", hex: "#7CABB1" }, {name: "正青", hex: "#6CA8AF" },
+                {name: "扁青", hex: "#509296" }, {name: "法翠", hex: "#108B96" }, {name: "翠蓝", hex: "#41888A" },
+                {name: "青鹱", hex: "#007175" }, {name: "纁色", hex: "#226B68" }, {name: "石绿", hex: "#206864" },
+                {name: "天青", hex: "#C6D7DB" }, {name: "井天", hex: "#A4C9CC" }, {name: "西子", hex: "#87C0CA" },
+                {name: "清水蓝", hex: "#93D5DC" }, {name: "松石", hex: "#75C1C4" }, {name: "天水碧", hex: "#5AA4AE" },
+                {name: "瀑布蓝", hex: "#51C4D3" }, {name: "甸子蓝", hex: "#10AEC2" }, {name: "霁青", hex: "#63BBD0" },
+                {name: "碧青", hex: "#5CB3CC" }, {name: "法蓝", hex: "#30AECF" }, {name: "胆矾蓝", hex: "#0F95B0" },
+                {name: "卵色天", hex: "#C8D8E1" }, {name: "影青", hex: "#BDCBD2" }, {name: "白青", hex: "#98B6C2" },
+                {name: "虾青", hex: "#94A9B8" }, {name: "竹月", hex: "#7F9FAF" }, {name: "空青", hex: "#6889F0" },
+                {name: "太师青", hex: "#547689" }, {name: "虾壳青", hex: "#869D9D" }, {name: "晚波蓝", hex: "#648E93" },
+                {name: "蜻蜓蓝", hex: "#3B818C" }, {name: "鱼师青", hex: "#32788A" }, {name: "青缟", hex: "#284852" }
                 ],
                 blue: [
-                    { name: "月白", hex: "#D4E5EF" }, { name: "远天蓝", hex: "#D0DFE6" }, { name: "井天蓝", hex: "#C3D7DF" },
-                    { name: "云水蓝", hex: "#BACCD9" }, { name: "星郎", hex: "#BCD4E7" }, { name: "碧落", hex: "#AED0EE" },
-                    { name: "星蓝", hex: "#93B5CF" }, { name: "晴山蓝", hex: "#8FB2C9" }, { name: "羽扇豆蓝", hex: "#619AC3" },
-                    { name: "晴蓝", hex: "#5698C3" }, { name: "宝石蓝", hex: "#2486B9" }, { name: "天蓝", hex: "#1677B3" },
-                    { name: "湖水蓝", hex: "#B0D5DF" }, { name: "秋波蓝", hex: "#8ABCD1" }, { name: "涧石蓝", hex: "#66A9C9" },
-                    { name: "孔雀蓝", hex: "#4994C4" }, { name: "景泰蓝", hex: "#2775B6" }, { name: "蔚蓝", hex: "#2874AF" },
-                    { name: "青冥", hex: "#3271AE" }, { name: "塘磁蓝", hex: "#11659A" }, { name: "柔蓝", hex: "#106898" },
-                    { name: "吐绶蓝", hex: "#4182A4" }, { name: "蝶翅蓝", hex: "#4E7CA1" }, { name: "海军蓝", hex: "#346C9C" },
-                    { name: "晴山", hex: "#A3BBDB" }, { name: "东方既白", hex: "#8BA3C7" }, { name: "窃蓝", hex: "#88ABDA" },
-                    { name: "监德", hex: "#6F94CD" }, { name: "苍苍", hex: "#597CBA" }, { name: "群青", hex: "#2E59A7" },
-                    { name: "海涛蓝", hex: "#15559A" }, { name: "二青", hex: "#1E50A2" }, { name: "酒蓝", hex: "#1E3B7A" },
-                    { name: "青金石", hex: "#2B2E77" }, { name: "宝蓝", hex: "#1F286F" }, { name: "青雀头黛", hex: "#354E6B" },
-                    { name: "品月", hex: "#8AABCC" }, { name: "接蓝", hex: "#6E9BC5" }, { name: "碧城", hex: "#12507B" },
-                    { name: "蓝采和", hex: "#06436F" }, { name: "绀宇", hex: "#003D74" }, { name: "品蓝", hex: "#003D74" },
-                    { name: "帝释青", hex: "#003460" }, { name: "佛头青", hex: "#19325F" }, { name: "骐驎", hex: "#12264F" },
-                    { name: "花青", hex: "#1A2847" }, { name: "海青", hex: "#080F40" }, { name: "瑾瑜", hex: "#1E2732" }
+                {name: "月白", hex: "#D4E5EF" }, {name: "远天蓝", hex: "#D0DFE6" }, {name: "井天蓝", hex: "#C3D7DF" },
+                {name: "云水蓝", hex: "#BACCD9" }, {name: "星郎", hex: "#BCD4E7" }, {name: "碧落", hex: "#AED0EE" },
+                {name: "星蓝", hex: "#93B5CF" }, {name: "晴山蓝", hex: "#8FB2C9" }, {name: "羽扇豆蓝", hex: "#619AC3" },
+                {name: "晴蓝", hex: "#5698C3" }, {name: "宝石蓝", hex: "#2486B9" }, {name: "天蓝", hex: "#1677B3" },
+                {name: "湖水蓝", hex: "#B0D5DF" }, {name: "秋波蓝", hex: "#8ABCD1" }, {name: "涧石蓝", hex: "#66A9C9" },
+                {name: "孔雀蓝", hex: "#4994C4" }, {name: "景泰蓝", hex: "#2775B6" }, {name: "蔚蓝", hex: "#2874AF" },
+                {name: "青冥", hex: "#3271AE" }, {name: "塘磁蓝", hex: "#11659A" }, {name: "柔蓝", hex: "#106898" },
+                {name: "吐绶蓝", hex: "#4182A4" }, {name: "蝶翅蓝", hex: "#4E7CA1" }, {name: "海军蓝", hex: "#346C9C" },
+                {name: "晴山", hex: "#A3BBDB" }, {name: "东方既白", hex: "#8BA3C7" }, {name: "窃蓝", hex: "#88ABDA" },
+                {name: "监德", hex: "#6F94CD" }, {name: "苍苍", hex: "#597GBA" }, {name: "群青", hex: "#2E59A7" },
+                {name: "海涛蓝", hex: "#15559A" }, {name: "二青", hex: "#1E50A2" }, {name: "酒蓝", hex: "#1E3B7A" },
+                {name: "青金石", hex: "#2B2E77" }, {name: "宝蓝", hex: "#1F286F" }, {name: "青雀头黛", hex: "#354E6B" },
+                {name: "品月", hex: "#8AABCC" }, {name: "接蓝", hex: "#6E9BC5" }, {name: "碧城", hex: "#12507B" },
+                {name: "蓝采和", hex: "#06436F" }, {name: "绀宇", hex: "#003D74" }, {name: "品蓝", hex: "#003D74" },
+                {name: "帝释青", hex: "#003460" }, {name: "佛头青", hex: "#19325F" }, {name: "骐驎", hex: "#12264F" },
+                {name: "花青", hex: "#1A2847" }, {name: "海青", hex: "#080F40" }, {name: "瑾瑜", hex: "#1E2732" }
                 ],
                 purple: [
-                    { name: "退红", hex: "#F0CFE3" }, { name: "樱花", hex: "#E4B8D5" }, { name: "丁香", hex: "#CE93BF" },
-                    { name: "萝兰紫", hex: "#C08EAF" }, { name: "青蛤壳紫", hex: "#BC84A8" }, { name: "木槿", hex: "#BA7AB1" },
-                    { name: "豆蔻紫", hex: "#AD6598" }, { name: "扁豆紫", hex: "#A35C8F" }, { name: "紫蒲", hex: "#A6569D" },
-                    { name: "赪紫", hex: "#8A1874" }, { name: "萸紫", hex: "#833C66" }, { name: "真紫", hex: "#652A41" },
-                    { name: "淡牵牛紫", hex: "#D1C2D3" }, { name: "凤信紫", hex: "#C8ADC4" }, { name: "楝花", hex: "#C59AC5" },
-                    { name: "轻紫", hex: "#C5A4CC" }, { name: "茄花", hex: "#BB97C5" }, { name: "槿紫", hex: "#806D9E" },
-                    { name: "青莲", hex: "#7B5AA3" }, { name: "紫罗兰", hex: "#5F479A" }, { name: "桔梗紫", hex: "#813C85" },
-                    { name: "齐紫", hex: "#6C216D" }, { name: "紫府", hex: "#995D7F" }, { name: "芥拾紫", hex: "#602641" },
-                    { name: "昌荣", hex: "#DCC7E1" }, { name: "紫薄汗", hex: "#BBA1CB" }, { name: "茈藐", hex: "#A67EB7" },
-                    { name: "蕈紫", hex: "#815C94" }, { name: "紫紶", hex: "#7D5284" }, { name: "拂紫绵", hex: "#7E527F" },
-                    { name: "三公子", hex: "#663D74" }, { name: "凝夜紫", hex: "#422256" }, { name: "葡萄青", hex: "#501D46" },
-                    { name: "紫茄", hex: "#49214A" }, { name: "油紫", hex: "#420B2F" }, { name: "鸦雏", hex: "#6A5B6D" },
-                    { name: "香炉紫烟", hex: "#D3CCD6" }, { name: "雪青", hex: "#A59ACA" }, { name: "紫菂", hex: "#9B8EA9" },
-                    { name: "藤萝紫", hex: "#8076A3" }, { name: "暮山紫", hex: "#A4ABD6" }, { name: "紫苑", hex: "#757CBB" },
-                    { name: "螺甸紫", hex: "#74759B" }, { name: "山梗紫", hex: "#61649F" }, { name: "野菊紫", hex: "#525288" },
-                    { name: "优昙瑞", hex: "#615EA8" }, { name: "延维", hex: "#4A4B9D" }, { name: "满天星紫", hex: "#2E317C" }
+                {name: "退红", hex: "#F0CFE3" }, {name: "樱花", hex: "#E4B8D5" }, {name: "丁香", hex: "#CE93BF" },
+                {name: "萝兰紫", hex: "#C08EAF" }, {name: "青蛤壳紫", hex: "#BC84A8" }, {name: "木槿", hex: "#BA7AB1" },
+                {name: "豆蔻紫", hex: "#AD6598" }, {name: "扁豆紫", hex: "#A35C8F" }, {name: "紫蒲", hex: "#A6569D" },
+                {name: "赪紫", hex: "#8A1874" }, {name: "萸紫", hex: "#833C66" }, {name: "真紫", hex: "#652A41" },
+                {name: "淡牵牛紫", hex: "#D1C2D3" }, {name: "凤信紫", hex: "#C8ADC4" }, {name: "楝花", hex: "#C59AC5" },
+                {name: "轻紫", hex: "#C5A4CC" }, {name: "茄花", hex: "#BB97C5" }, {name: "槿紫", hex: "#806D9E" },
+                {name: "青莲", hex: "#7B5AA3" }, {name: "紫罗兰", hex: "#5F479A" }, {name: "桔梗紫", hex: "#813C85" },
+                {name: "齐紫", hex: "#6C216D" }, {name: "紫府", hex: "#995D7F" }, {name: "芥拾紫", hex: "#602641" },
+                {name: "昌荣", hex: "#DCC7E1" }, {name: "紫薄汗", hex: "#BBA1CB" }, {name: "茈藐", hex: "#A67EB7" },
+                {name: "蕈紫", hex: "#815C94" }, {name: "紫紶", hex: "#7D5284" }, {name: "拂紫绵", hex: "#7E527F" },
+                {name: "三公子", hex: "#663D74" }, {name: "凝夜紫", hex: "#422256" }, {name: "葡萄青", hex: "#501D46" },
+                {name: "紫茄", hex: "#49214A" }, {name: "油紫", hex: "#420B2F" }, {name: "鸦雏", hex: "#6A5B6D" },
+                {name: "香炉紫烟", hex: "#D3CCD6" }, {name: "雪青", hex: "#A59ACA" }, {name: "紫菂", hex: "#9B8EA9" },
+                {name: "藤萝紫", hex: "#807GA3" }, {name: "暮山紫", hex: "#A4ABD6" }, {name: "紫苑", hex: "#757CBB" },
+                {name: "螺甸紫", hex: "#74759B" }, {name: "山梗紫", hex: "#61649F" }, {name: "野菊紫", hex: "#525288" },
+                {name: "优昙瑞", hex: "#615EA8" }, {name: "延维", hex: "#4A4B9D" }, {name: "满天星紫", hex: "#2E317C" }
                 ],
                 white: [
-                    { name: "缟羽", hex: "#EFEFEF" }, { name: "浅云", hex: "#EAEFF1" }, { name: "银白", hex: "#EFF0F1" },
-                    { name: "鹄白", hex: "#EBEFF0" }, { name: "羊绒", hex: "#EAEBEB" }, { name: "葱白", hex: "#EBEEE8" },
-                    { name: "蛤粉", hex: "#EBEEE1" }, { name: "白垩", hex: "#E0E1D9" }, { name: "缟素", hex: "#E6E6DC" },
-                    { name: "象牙", hex: "#EEEADC" }, { name: "米汤娇", hex: "#EEEAD9" }, { name: "蜜合", hex: "#DFD7C2" },
-                    { name: "乳白", hex: "#FFFFE3" }, { name: "凝脂", hex: "#F5F2E9" }, { name: "山矾", hex: "#F5F3F2" },
-                    { name: "玉瓶", hex: "#EAE5E3" }, { name: "芡食白", hex: "#E2E1E4" }, { name: "葭灰", hex: "#D3D4D3" },
-                    { name: "汉白玉", hex: "#F8F4ED" }, { name: "荷花白", hex: "#FBECDE" }, { name: "蚌肉白", hex: "#F9F1DB" },
-                    { name: "荔肉白", hex: "#F2E6CE" }, { name: "米色", hex: "#F9E9CD" }, { name: "菊蕾白", hex: "#E9DDB6" },
-                    { name: "酂白", hex: "#F9F9E4" }, { name: "皦玉", hex: "#EBEEE8" }, { name: "吉量", hex: "#EBEDDF" },
-                    { name: "天球", hex: "#E0DFC6" }, { name: "韶粉", hex: "#E0E0D0" }, { name: "二目鱼", hex: "#DFE0D9" },
-                    { name: "明月珰", hex: "#D4D3CA" }, { name: "霜地", hex: "#C7C6B6" }, { name: "溶溶月", hex: "#BEC2BC" },
-                    { name: "余白", hex: "#C9CFC1" }, { name: "草白", hex: "#BFC1A9" }, { name: "豆白", hex: "#D5E0D5" },
-                    { name: "东方亮", hex: "#F5FBFE" }, { name: "甜白", hex: "#ECEFF4" }, { name: "卵白", hex: "#E4ECF0" },
-                    { name: "荻色", hex: "#DFE5E8" }, { name: "素采", hex: "#D4DDE1" }, { name: "月白", hex: "#D4E5EE" },
-                    { name: "云峰白", hex: "#D8E3EC" }, { name: "鱼肚白", hex: "#C8D0D3" }, { name: "影青", hex: "#BDCBD2" },
-                    { name: "逍遥游", hex: "#B2BFC3" }, { name: "白青", hex: "#98B6C2" }, { name: "青鸾", hex: "#9AA7B1" }
+                {name: "缟羽", hex: "#EFEFEF" }, {name: "浅云", hex: "#EAEFF1" }, {name: "银白", hex: "#EFF0F1" },
+                {name: "鹄白", hex: "#EBEFF0" }, {name: "羊绒", hex: "#EAEBEB" }, {name: "葱白", hex: "#EBEEE8" },
+                {name: "蛤粉", hex: "#EBEEE1" }, {name: "白垩", hex: "#E0E1D9" }, {name: "缟素", hex: "#E6E6DC" },
+                {name: "象牙", hex: "#EEEADC" }, {name: "米汤娇", hex: "#EEEAD9" }, {name: "蜜合", hex: "#DFD7C2" },
+                {name: "乳白", hex: "#FFFFE3" }, {name: "凝脂", hex: "#F5F2E9" }, {name: "山矾", hex: "#F5F3F2" },
+                {name: "玉瓶", hex: "#EAE5E3" }, {name: "芡食白", hex: "#E2E1E4" }, {name: "葭灰", hex: "#D3D4D3" },
+                {name: "汉白玉", hex: "#F8F4ED" }, {name: "荷花白", hex: "#FBECDE" }, {name: "蚌肉白", hex: "#F9F1DB" },
+                {name: "荔肉白", hex: "#F2E6CE" }, {name: "米色", hex: "#F9E9CD" }, {name: "菊蕾白", hex: "#E9DDB6" },
+                {name: "酂白", hex: "#F9F9E4" }, {name: "皦玉", hex: "#EBEEE8" }, {name: "吉量", hex: "#EBEDDF" },
+                {name: "天球", hex: "#E0DFC6" }, {name: "韶粉", hex: "#E0E0D0" }, {name: "二目鱼", hex: "#DFE0D9" },
+                {name: "明月珰", hex: "#D4D3CA" }, {name: "霜地", hex: "#C7C6B6" }, {name: "溶溶月", hex: "#BEC2BC" },
+                {name: "余白", hex: "#C9CFC1" }, {name: "草白", hex: "#BFC1A9" }, {name: "豆白", hex: "#D5E0D5" },
+                {name: "东方亮", hex: "#F5FBFE" }, {name: "甜白", hex: "#ECEFF4" }, {name: "卵白", hex: "#E4ECF0" },
+                {name: "荻色", hex: "#DFE5E8" }, {name: "素采", hex: "#D4DDE1" }, {name: "月白", hex: "#D4E5EE" },
+                {name: "云峰白", hex: "#D8E3EC" }, {name: "鱼肚白", hex: "#C8D0D3" }, {name: "影青", hex: "#BDCBD2" },
+                {name: "逍遥游", hex: "#B2BFC3" }, {name: "白青", hex: "#98B6C2" }, {name: "青鸾", hex: "#9AA7B1" }
                 ],
                 black: [
-                    { name: "雷雨垂", hex: "#7A7B78" }, { name: "石涅", hex: "#686A67" }, { name: "黑朱", hex: "#70695D" },
-                    { name: "沙石", hex: "#69635D" }, { name: "墨黪", hex: "#585248" }, { name: "鸭雏", hex: "#483D34" },
-                    { name: "纁骊", hex: "#46433B" }, { name: "青骊", hex: "#422517" }, { name: "金青", hex: "#46443B" },
-                    { name: "茶青", hex: "#3F3B31" }, { name: "京元", hex: "#31322C" }, { name: "铁棕", hex: "#1A0404" },
-                    { name: "铁色", hex: "#595861" }, { name: "黪墨", hex: "#625D6B" }, { name: "玄天", hex: "#6B5458" },
-                    { name: "烟墨", hex: "#5C4F55" }, { name: "紫鼠", hex: "#594C57" }, { name: "曾青", hex: "#535164" },
-                    { name: "青黛", hex: "#45465E" }, { name: "鷩艴", hex: "#454659" }, { name: "青雀头黛", hex: "#354E6B" },
-                    { name: "育阳染", hex: "#576470" }, { name: "霁蓝", hex: "#3C4654" }, { name: "骐驎", hex: "#12264F" },
-                    { name: "油烟墨", hex: "#3F3F3C" }, { name: "绿云", hex: "#45493D" }, { name: "蒽油绿", hex: "#373834" },
-                    { name: "老绿", hex: "#1C2D29" }, { name: "墨绿", hex: "#1C2D25" }, { name: "苷蓝绿", hex: "#1F2623" },
-                    { name: "云杉绿", hex: "#15231B" }, { name: "螺子黛", hex: "#13393E" }, { name: "鹰背", hex: "#39363F" },
-                    { name: "朱墨", hex: "#2D2D30" }, { name: "石青", hex: "#2E282E" }, { name: "墨紫", hex: "#281D2C" },
-                    { name: "火薰", hex: "#2F3243" }, { name: "真青", hex: "#192841" }, { name: "花青", hex: "#1A2847" },
-                    { name: "璆琳", hex: "#343041" }, { name: "鼎灰", hex: "#36292F" }, { name: "绀蝶", hex: "#2C2F3B" },
-                    { name: "暗龙胆紫", hex: "#22202E" }, { name: "瑾瑜", hex: "#1E2732" }, { name: "元青", hex: "#28292B" },
-                    { name: "构玄", hex: "#262729" }, { name: "燕尾青", hex: "#131423" }, { name: "獭见", hex: "#151D29" }
+                {name: "雷雨垂", hex: "#7A7B78" }, {name: "石涅", hex: "#686A67" }, {name: "黑朱", hex: "#70695D" },
+                {name: "沙石", hex: "#69635D" }, {name: "墨黪", hex: "#585248" }, {name: "鸭雏", hex: "#483D34" },
+                {name: "纁骊", hex: "#46433B" }, {name: "青骊", hex: "#422517" }, {name: "金青", hex: "#46443B" },
+                {name: "茶青", hex: "#3F3B31" }, {name: "京元", hex: "#31322C" }, {name: "铁棕", hex: "#1A0404" },
+                {name: "铁色", hex: "#595861" }, {name: "黪墨", hex: "#625D6B" }, {name: "玄天", hex: "#6B5458" },
+                {name: "烟墨", hex: "#5C4F55" }, {name: "紫鼠", hex: "#594C57" }, {name: "曾青", hex: "#535164" },
+                {name: "青黛", hex: "#45465E" }, {name: "鷩艴", hex: "#454659" }, {name: "青雀头黛", hex: "#354E6B" },
+                {name: "育阳染", hex: "#576470" }, {name: "霁蓝", hex: "#3C4654" }, {name: "骐驎", hex: "#12264F" },
+                {name: "油烟墨", hex: "#3F3F3C" }, {name: "绿云", hex: "#45493D" }, {name: "蒽油绿", hex: "#373834" },
+                {name: "老绿", hex: "#1C2D29" }, {name: "墨绿", hex: "#1C2D25" }, {name: "苷蓝绿", hex: "#1F2623" },
+                {name: "云杉绿", hex: "#15231B" }, {name: "螺子黛", hex: "#13393E" }, {name: "鹰背", hex: "#39363F" },
+                {name: "朱墨", hex: "#2D2D30" }, {name: "石青", hex: "#2E282E" }, {name: "墨紫", hex: "#281D2C" },
+                {name: "火薰", hex: "#2F3243" }, {name: "真青", hex: "#192841" }, {name: "花青", hex: "#1A2847" },
+                {name: "璆琳", hex: "#343041" }, {name: "鼎灰", hex: "#36292F" }, {name: "绀蝶", hex: "#2C2F3B" },
+                {name: "暗龙胆紫", hex: "#22202E" }, {name: "瑾瑜", hex: "#1E2732" }, {name: "元青", hex: "#28292B" },
+                {name: "构玄", hex: "#262729" }, {name: "燕尾青", hex: "#131423" }, {name: "獭见", hex: "#151D29" }
                 ],
                 brown: [
-                    { name: "绢色", hex: "#EAD8AE" }, { name: "糙米", hex: "#DBCBA1" }, { name: "紫花布", hex: "#BEA78B" },
-                    { name: "蒸栗", hex: "#A58A5F" }, { name: "黄琮", hex: "#9E8C6B" }, { name: "绿豆褐", hex: "#92896B" },
-                    { name: "茶绿褐", hex: "#8E8570" }, { name: "茶色", hex: "#878767" }, { name: "流黄", hex: "#8B7040" },
-                    { name: "橄榄", hex: "#77642A" }, { name: "伽罗", hex: "#6D5C3D" }, { name: "昆布", hex: "#554F30" },
-                    { name: "血牙", hex: "#E9D1B5" }, { name: "露褐", hex: "#D2AE94" }, { name: "沉香", hex: "#99806C" },
-                    { name: "明茶褐", hex: "#9E8368" }, { name: "荆褐", hex: "#906C4A" }, { name: "赭石", hex: "#845A33" },
-                    { name: "枯黄", hex: "#895D31" }, { name: "枯竹褐", hex: "#82572D" }, { name: "驼褐", hex: "#7C5B3E" },
-                    { name: "射干", hex: "#7C623F" }, { name: "油葫芦", hex: "#644D31" }, { name: "苍艾", hex: "#5A4C3B" },
-                    { name: "珠子褐", hex: "#BEA89D" }, { name: "丁香褐", hex: "#BD9683" }, { name: "驼茸", hex: "#9E725A" },
-                    { name: "棠梨褐", hex: "#955A42" }, { name: "紫砂", hex: "#7C4622" }, { name: "朱石栗", hex: "#81492C" },
-                    { name: "檀褐", hex: "#804C2E" }, { name: "驼色", hex: "#66462A" }, { name: "古铜", hex: "#604322" },
-                    { name: "油栗褐", hex: "#604223" }, { name: "茶褐", hex: "#5D3D21" }, { name: "古铜绿", hex: "#533C1B" },
-                    { name: "鹰背褐", hex: "#8F6D5F" }, { name: "麝香褐", hex: "#694B3C" }, { name: "椒褐", hex: "#72453A" },
-                    { name: "蜜褐", hex: "#683632" }, { name: "栗棕", hex: "#5C1E19" }, { name: "枣褐", hex: "#68361A" },
-                    { name: "目童子", hex: "#5B3222" }, { name: "栗壳", hex: "#50200A" }, { name: "烟色", hex: "#564232" },
-                    { name: "酱色", hex: "#402929" }, { name: "豆沙", hex: "#481E1C" }, { name: "青骊", hex: "#422517" }
+                {name: "绢色", hex: "#EAD8AE" }, {name: "糙米", hex: "#DBCBA1" }, {name: "紫花布", hex: "#BEA78B" },
+                {name: "蒸栗", hex: "#A58A5F" }, {name: "黄琮", hex: "#9E8C6B" }, {name: "绿豆褐", hex: "#92896B" },
+                {name: "茶绿褐", hex: "#8E8570" }, {name: "茶色", hex: "#878767" }, {name: "流黄", hex: "#8B7040" },
+                {name: "橄榄", hex: "#77642A" }, {name: "伽罗", hex: "#6D5C3D" }, {name: "昆布", hex: "#554F30" },
+                {name: "血牙", hex: "#E9D1B5" }, {name: "露褐", hex: "#D2AE94" }, {name: "沉香", hex: "#99806C" },
+                {name: "明茶褐", hex: "#9E8368" }, {name: "荆褐", hex: "#906C4A" }, {name: "赭石", hex: "#845A33" },
+                {name: "枯黄", hex: "#895D31" }, {name: "枯竹褐", hex: "#82572D" }, {name: "驼褐", hex: "#7C5B3E" },
+                {name: "射干", hex: "#7C623F" }, {name: "油葫芦", hex: "#644D31" }, {name: "苍艾", hex: "#5A4C3B" },
+                {name: "珠子褐", hex: "#BEA89D" }, {name: "丁香褐", hex: "#BD9683" }, {name: "驼茸", hex: "#9E725A" },
+                {name: "棠梨褐", hex: "#955A42" }, {name: "紫砂", hex: "#7C4622" }, {name: "朱石栗", hex: "#81492C" },
+                {name: "檀褐", hex: "#804C2E" }, {name: "驼色", hex: "#66462A" }, {name: "古铜", hex: "#604322" },
+                {name: "油栗褐", hex: "#604223" }, {name: "茶褐", hex: "#5D3D21" }, {name: "古铜绿", hex: "#533C1B" },
+                {name: "鹰背褐", hex: "#8F6D5F" }, {name: "麝香褐", hex: "#694B3C" }, {name: "椒褐", hex: "#72453A" },
+                {name: "蜜褐", hex: "#683632" }, {name: "栗棕", hex: "#5C1E19" }, {name: "枣褐", hex: "#68361A" },
+                {name: "目童子", hex: "#5B3222" }, {name: "栗壳", hex: "#50200A" }, {name: "烟色", hex: "#564232" },
+                {name: "酱色", hex: "#402929" }, {name: "豆沙", hex: "#481E1C" }, {name: "青骊", hex: "#422517" }
                 ],
                 custom: []
-            };
-            // ---------- 通用请求 ----------
-            async function apiRequest(endpoint, options = {}) {
-                if (!authToken) throw new Error('未登录');
-                const headers = {
-                    'Authorization': `Bearer ${authToken}`,
-                    ...options.headers
-                };
-                if (!(options.body instanceof FormData)) {
-                    headers['Content-Type'] = 'application/json';
-                }
-                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-                if (resp.status === 401) {
-                    localStorage.removeItem('authToken');
-                    window.location.href = 'index.html';
-                    throw new Error('登录过期');
-                }
-                if (!resp.ok) {
-                    const err = await resp.text();
-                    throw new Error(`请求失败: ${resp.status} ${err}`);
-                }
-                return resp.json();
-            }
+              };
+            // ⚠️ 注意：上面省略了颜色数据，请保留您原有的完整 traditionalColors 对象！
 
-            async function fetchCurrentUser() {
-                try {
-                    const data = await apiRequest('/api/users/me');
-                    currentUser = data.user || data;
-                } catch (e) {
-                    console.warn('获取用户失败', e);
-                }
-            }
-
-            // ---------- 画布相关 ----------
+            // ========== 画布相关 ==========
             const canvas = document.getElementById('dyeCanvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const colorGrid = document.getElementById('colorGrid');
@@ -893,7 +860,6 @@
                 }
                 saveInitialHistory();
             }
-
             function floodFill(startX, startY, fillR, fillG, fillB, fillA, toleranceVal) {
                 const imageData = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
                 const data = imageData.data; const width = CANVAS_W, height = CANVAS_H;
@@ -978,9 +944,7 @@
             opacity.addEventListener('input', updateColorFromSliders);
             tolerance.addEventListener('input', () => toleranceValue.textContent = tolerance.value);
 
-            // 渲染色盘
-            function loadCustomFromStorage() { /* 可从后端获取 */ }
-            function saveCustomToStorage() { /* 后端存储 */ }
+            // ========== 色盘渲染 ==========
             function renderColorGrid(type) {
                 colorGrid.innerHTML = '';
                 const list = traditionalColors[type] || [];
@@ -995,10 +959,11 @@
                         syncSlidersFromHex(c.hex);
                     });
                     const del = card.querySelector('.delete-btn');
-                    if (del) del.addEventListener('click', (e) => { e.stopPropagation(); traditionalColors.custom.splice(del.dataset.idx, 1); saveCustomToStorage(); renderColorGrid('custom'); });
+                    if (del) del.addEventListener('click', (e) => { e.stopPropagation(); traditionalColors.custom.splice(del.dataset.idx, 1); renderColorGrid('custom'); });
                     colorGrid.appendChild(card);
                 });
             }
+
             document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     if (btn.classList.contains('btn-save-custom')) return;
@@ -1007,63 +972,115 @@
                     renderColorGrid(btn.dataset.tab);
                 });
             });
+
             document.getElementById('saveToCustom').addEventListener('click', () => {
                 const name = prompt('为这个颜色命名：'); if (!name) return;
                 traditionalColors.custom.push({ name, hex: currentHex });
-                saveCustomToStorage(); alert('已保存到个人调色盘');
+                renderColorGrid('custom');
+                alert('已保存到个人调色盘');
             });
 
-            // 素材渲染 (后端获取)
+            // ========== 素材加载 ==========
             async function loadTemplates() {
                 try {
-                    const data = await apiRequest('/api/materials/templates');
-                    const templates = data.templates || [];
+                    const res = await fetch('/api/images');
+                    const images = await res.json();
                     templateGrid.innerHTML = '';
-                    templates.forEach(item => {
-                        const card = document.createElement('div'); card.className = 'material-card';
-                        const img = document.createElement('img'); img.src = item.imageUrl; img.alt = item.name;
-                        img.addEventListener('click', () => { loadBaseImage(item.imageUrl); workName = item.name; });
-                        card.appendChild(img); templateGrid.appendChild(card);
+                    if (!images.length) {
+                        templateGrid.innerHTML = '<div class="empty">暂无预设素材</div>';
+                        return;
+                    }
+                    images.forEach(img => {
+                        const card = document.createElement('div');
+                        card.className = 'material-card';
+                        const imgEl = document.createElement('img');
+                        imgEl.src = img.imageUrl;
+                        imgEl.addEventListener('click', () => loadBaseImage(img.imageUrl));
+                        const label = document.createElement('div');
+                        label.className = 'card-label';
+                        label.textContent = img.name || '素材';
+                        card.appendChild(imgEl);
+                        card.appendChild(label);
+                        templateGrid.appendChild(card);
                     });
-                } catch (e) { templateGrid.innerHTML = '<div class="empty">加载预设失败</div>'; }
-            }
-            async function loadMyUploads() {
-                if (!currentUser) { userUploadGrid.innerHTML = '<div class="empty">请先登录</div>'; return; }
-                try {
-                    const data = await apiRequest('/api/materials/my');
-                    const list = data.materials || [];
-                    userUploadGrid.innerHTML = '';
-                    list.forEach(item => {
-                        const card = document.createElement('div'); card.className = 'material-card';
-                        const img = document.createElement('img'); img.src = item.imageUrl;
-                        img.addEventListener('click', () => { loadBaseImage(item.imageUrl); workName = item.name; });
-                        const label = document.createElement('div'); label.className = 'card-label';
-                        label.textContent = item.name + (item.shared ? ' 🌐' : ' 🔒');
-                        card.appendChild(img); card.appendChild(label);
-                        userUploadGrid.appendChild(card);
-                    });
-                } catch (e) { userUploadGrid.innerHTML = '<div class="empty">加载失败</div>'; }
+                } catch (e) {
+                    templateGrid.innerHTML = '<div class="empty">加载失败</div>';
+                }
             }
 
-            // 上传图片
+            // ✅ 关键修复：加载“我的上传”
+            async function loadMyUploads() {
+                if (!currentUser) {
+                    userUploadGrid.innerHTML = '<div class="empty">请先登录</div>';
+                    return;
+                }
+                try {
+                    const res = await fetch(`/api/user-images?userId=${currentUser.id}`);
+                    const list = await res.json();
+                    userUploadGrid.innerHTML = '';
+                    if (!list.length) {
+                        userUploadGrid.innerHTML = '<div class="empty">暂无上传</div>';
+                        return;
+                    }
+                    list.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'material-card';
+                        const img = document.createElement('img');
+                        img.src = item.imageUrl;
+                        img.addEventListener('click', () => loadBaseImage(item.imageUrl));
+                        const label = document.createElement('div');
+                        label.className = 'card-label';
+                        label.textContent = (item.name || '我的图片') + (item.isPublic ? ' 🌐' : ' 🔒');
+                        card.appendChild(img);
+                        card.appendChild(label);
+                        userUploadGrid.appendChild(card);
+                    });
+                } catch (e) {
+                    userUploadGrid.innerHTML = '<div class="empty">加载失败</div>';
+                }
+            }
+
+            // ========== 上传 ==========
             const fileInput = document.getElementById('fileInput');
-            document.getElementById('uploadImageBtn').addEventListener('click', () => fileInput.click());
+            document.getElementById('uploadImageBtn').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('请先登录');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                fileInput.click();
+            });
+
             fileInput.addEventListener('change', async (e) => {
-                const file = fileInput.files[0]; if (!file) return;
+                const file = fileInput.files[0];
+                if (!file) return;
                 fileInput.value = '';
                 if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/i)) { alert('图片格式不支持'); return; }
                 if (file.size > 5 * 1024 * 1024) { alert('图片不能超过5MB'); return; }
+
                 const formData = new FormData();
                 formData.append('image', file);
-                formData.append('shared', document.getElementById('shareImageCheck').checked);
+                formData.append('userId', currentUser.id);
+                formData.append('name', file.name);
+                formData.append('isPublic', document.getElementById('shareImageCheck').checked ? 1 : 0);
+
                 try {
-                    const res = await apiRequest('/api/materials/upload', { method: 'POST', body: formData });
-                    loadBaseImage(res.imageUrl); workName = res.name || file.name;
-                    loadMyUploads(); alert('上传成功');
-                } catch (e) { alert('上传失败: ' + e.message); }
+                    const res = await fetch('/api/upload-user-image', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        loadBaseImage(data.imageUrl);
+                        workName = file.name;
+                        loadMyUploads();
+                        alert('上传成功');
+                    } else {
+                        alert('上传失败: ' + (data.msg || '未知错误'));
+                    }
+                } catch (err) {
+                    alert('网络错误，上传失败');
+                }
             });
 
-            // 按钮事件
+            // ========== 按钮事件 ==========
             document.getElementById('btnUndo').addEventListener('click', undo);
             document.getElementById('btnClear').addEventListener('click', resetToBaseImage);
             document.getElementById('btnRename').addEventListener('click', () => {
@@ -1071,27 +1088,47 @@
             });
             document.getElementById('btnExport').addEventListener('click', () => {
                 const link = document.createElement('a');
-                link.download = workName + '.png'; link.href = canvas.toDataURL('image/png'); link.click();
+                link.download = workName + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
             });
             document.getElementById('btnSave').addEventListener('click', async () => {
                 if (!currentUser) { alert('请先登录'); return; }
                 const dataURL = canvas.toDataURL('image/png');
                 const isPublic = confirm('点击"确定"发布为作品，点击"取消"保存为草稿');
-                const endpoint = isPublic ? '/api/works' : '/api/drafts';
-                const payload = { title: workName, imageData: dataURL, isPublic };
+                const payload = {
+                    userId: currentUser.id,
+                    title: workName,
+                    imageData: dataURL,
+                    isPublic: isPublic
+                };
                 try {
-                    await apiRequest(endpoint, { method: 'POST', body: JSON.stringify(payload) });
-                    alert(isPublic ? '作品已发布！' : '草稿已保存');
-                } catch (e) { alert('保存失败: ' + e.message); }
+                    const res = await fetch('/api/works', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert(isPublic ? '作品已发布！' : '草稿已保存');
+                    } else {
+                        alert('保存失败: ' + data.msg);
+                    }
+                } catch (e) {
+                    alert('网络错误，保存失败');
+                }
             });
 
-            // 初始化
+            // ========== 初始化 ==========
             (async function init() {
                 initCanvas();
                 updateColorFromSliders();
-                if (authToken) await fetchCurrentUser();
                 loadTemplates();
-                if (currentUser) loadMyUploads(); else userUploadGrid.innerHTML = '<div class="empty">请先登录</div>';
+                if (currentUser) {
+                    loadMyUploads();
+                } else {
+                    userUploadGrid.innerHTML = '<div class="empty">请先登录</div>';
+                }
                 document.querySelector('[data-tab="red"]').classList.add('active');
                 renderColorGrid('red');
             })();

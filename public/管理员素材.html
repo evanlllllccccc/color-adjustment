@@ -205,7 +205,7 @@
         </div>
     </div>
     <script>
-        const API_BASE = 'https://color-adjustment-production.up.railway.app';
+        const API_BASE = ' ';
         function goTo(p) { location.href = p; }
         function logout() { localStorage.removeItem('currentUser'); location.href = 'index.html'; }
 
@@ -246,16 +246,16 @@
                 const materials = data.materials || data || [];
                 const grid = document.getElementById('materialGrid');
                 if (!materials.length) { grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#a87f61;">暂无素材</div>'; return; }
-                grid.innerHTML = materials.map(m => `
-                    <div class="material-item">
-                        <img src="${m.imageUrl || m.img}" onerror="this.src='https://picsum.photos/200/160'">
-                        <button class="material-del" onclick="deleteMaterial('${m.id}')">删除</button>
-                        <div class="material-info">
-                            <div>${escapeHtml(m.name)}</div>
-                            <div style="font-size:12px; color:#a87f61;">${escapeHtml(m.category || '未分类')}</div>
-                        </div>
-                    </div>
-                `).join('');
+                grid.innerHTML = materials.map(item => `
+    <div class="material-item">
+        <img src="${item.imageUrl || item.img}" onerror="this.src='https://picsum.photos/200/160'">
+        <button class="material-del" onclick="deleteMaterial('${item.id}')">删除</button>
+        <div class="material-info">
+            <div>${escapeHtml(item.name)}</div>
+            <div style="font-size:12px; color:#a87f61;">${escapeHtml(item.category || '未分类')}</div>
+        </div>
+    </div>
+`).join('');
             } catch (e) { document.getElementById('materialGrid').innerHTML = '<div>加载失败</div>'; }
         }
 

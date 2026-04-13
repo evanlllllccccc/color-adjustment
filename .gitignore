@@ -28,3 +28,10 @@ Desktop.ini
 # 日志文件（忽略）
 logs/
 *.log
+
+# 本地数据库文件
+database.db
+
+# 本地测试上传的图片
+img-*.png
+public/uploads/
