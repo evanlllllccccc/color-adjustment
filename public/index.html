@@ -155,6 +155,7 @@
         <button class="btn btn-login" onclick="handleLogin()">登录</button>
         <button class="btn btn-register" onclick="showRegister()">注册账号</button>
         <button class="btn btn-guest" onclick="goGuest()">游客进入</button>
+        <!-- 删除了多余的 #btnRegister 按钮 -->
     </div>
 
     <div class="modal" id="regModal">
@@ -174,37 +175,53 @@
     </div>
 
     <script>
-        // 后端地址（前后端同源后可使用相对路径，但这里保留绝对路径以便兼容，相对路径更佳）
-        // 如果前后端同域，建议直接使用相对路径，例如 '/api/register'
-        // 改成你的后端地址
+        // API 地址
         const API = 'https://color-adjustment-production.up.railway.app';
 
-        function showRegister() { document.getElementById("regModal").classList.add("show"); }
-        function hideRegister() { document.getElementById("regModal").classList.remove("show"); }
+        // ========== 注册弹窗控制 ==========
+        function showRegister() {
+            document.getElementById("regModal").classList.add("show");
+        }
+
+        function hideRegister() {
+            document.getElementById("regModal").classList.remove("show");
+        }
 
         // ========== 注册 ==========
         async function doRegister() {
             const account = document.getElementById("regAccount").value.trim();
             const pwd = document.getElementById("regPwd").value.trim();
-            if (!account || !pwd) { alert("请填写账号和密码"); return; }
+
+            if (!account || !pwd) {
+                alert("请填写账号和密码");
+                return;
+            }
+
+            console.log('准备注册:', { account, API });
+
             try {
                 const res = await fetch(API + "/api/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username: account, password: pwd })
                 });
+
+                console.log('响应状态:', res.status);
+
                 const result = await res.json();
+                console.log('响应结果:', result);
+
                 if (result.success) {
                     alert("注册成功！请登录");
                     hideRegister();
-                    // 清空注册表单
                     document.getElementById("regAccount").value = '';
                     document.getElementById("regPwd").value = '';
                 } else {
                     alert(result.msg || "注册失败，账号可能已存在");
                 }
             } catch (e) {
-                alert("注册失败，请检查网络");
+                console.error('注册错误:', e);
+                alert("注册失败: " + e.message);
             }
         }
 
@@ -212,14 +229,21 @@
         async function handleLogin() {
             const username = document.getElementById("loginAccount").value.trim();
             const password = document.getElementById("loginPwd").value;
-            if (!username || !password) { alert("请输入账号和密码"); return; }
+
+            if (!username || !password) {
+                alert("请输入账号和密码");
+                return;
+            }
+
             try {
                 const res = await fetch(API + "/api/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
+
                 const data = await res.json();
+
                 if (data.success) {
                     localStorage.setItem("currentUser", JSON.stringify(data.user));
                     if (data.user.role === "admin") {
@@ -235,11 +259,12 @@
             }
         }
 
-        // ========== 游客 ==========
+        // ========== 游客进入 ==========
         async function goGuest() {
             try {
                 const res = await fetch(API + "/api/guest", { method: "POST" });
                 const result = await res.json();
+
                 if (result.success) {
                     localStorage.setItem("currentUser", JSON.stringify({ userId: 0, username: "游客" }));
                     location.href = "游客界面.html";
