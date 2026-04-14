@@ -176,7 +176,8 @@
     <script>
         // 后端地址（前后端同源后可使用相对路径，但这里保留绝对路径以便兼容，相对路径更佳）
         // 如果前后端同域，建议直接使用相对路径，例如 '/api/register'
-        const API = '';  // 空字符串表示使用相对路径
+        // 改成你的后端地址
+        const API = 'https://color-adjustment-production.up.railway.app';
 
         function showRegister() { document.getElementById("regModal").classList.add("show"); }
         function hideRegister() { document.getElementById("regModal").classList.remove("show"); }
