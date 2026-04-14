@@ -7,29 +7,13 @@ const fs = require('fs');
 const app = express();
 
 // ====================== 跨域配置 ======================
-const allowedOrigins = [
-    'https://color-adjustment-production.up.railway.app',  // ← 添加
-    'https://color-adjustment.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'https://colorad.oss-cn-beijing.aliyuncs.com'
-];
-
+// ====================== 跨域配置 ======================
+// 临时调试：允许所有来源
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.warn('⚠️ CORS 阻止了来自:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
