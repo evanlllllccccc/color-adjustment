@@ -179,15 +179,35 @@ app.get('/health', (req, res) => res.status(200).send('OK'));
 
 // 注册
 app.post('/api/register', (req, res) => {
+    console.log('收到注册请求:', req.body);  // 调试日志
+
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ success: false, msg: '账号和密码不能为空' });
+    if (!username || !password) {
+        console.log('缺少参数');
+        return res.status(400).json({ success: false, msg: '账号和密码不能为空' });
+    }
+
+    console.log('查询用户:', username);
     db.get(`SELECT id FROM users WHERE username = ?`, [username], (err, row) => {
-        if (err) return res.status(500).json({ success: false, msg: '服务器错误' });
-        if (row) return res.json({ success: false, msg: '账号已存在' });
+        if (err) {
+            console.error('查询错误:', err);  // 调试日志
+            return res.status(500).json({ success: false, msg: '服务器错误' });
+        }
+        if (row) {
+            console.log('用户已存在');
+            return res.json({ success: false, msg: '账号已存在' });
+        }
+
         const today = new Date().toISOString().split('T')[0];
+        console.log('准备插入:', { username, today });
+
         db.run(`INSERT INTO users (username, password, role, lastLoginDate) VALUES (?, ?, 'user', ?)`,
             [username, password, today], function (err) {
-                if (err) return res.status(500).json({ success: false, msg: '注册失败' });
+                if (err) {
+                    console.error('插入错误:', err);  // 调试日志
+                    return res.status(500).json({ success: false, msg: '注册失败' });
+                }
+                console.log('注册成功, ID:', this.lastID);
                 res.json({ success: true, msg: '注册成功' });
             });
     });
