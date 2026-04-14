@@ -8,6 +8,7 @@ const app = express();
 
 // ====================== 跨域配置 ======================
 const allowedOrigins = [
+    'https://color-adjustment-production.up.railway.app',  // ← 添加
     'https://color-adjustment.vercel.app',
     'http://localhost:3000',
     'http://localhost:5500',
