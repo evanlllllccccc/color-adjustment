@@ -225,7 +225,7 @@
             formData.append('name', name);
             formData.append('category', category);
             try {
-                await fetch(`${API_BASE}/api/admin/materials`, { method: 'POST', body: formData });
+                await fetch(`${API}/api/admin/materials`, { method: 'POST', body: formData });
                 alert('上传成功');
                 document.getElementById('materialFile').value = '';
                 document.getElementById('materialName').value = '';
@@ -242,7 +242,7 @@
 
         async function loadMaterials() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/materials`);
+                const res = await fetch(`${API}/api/admin/materials`);
                 const data = await res.json();
                 const materials = data.materials || data || [];
                 const grid = document.getElementById('materialGrid');
@@ -265,7 +265,7 @@
         window.deleteMaterial = async function (id) {
             if (!confirm('确定删除？')) return;
             try {
-                await fetch(`${API_BASE}/api/admin/materials/${id}`, { method: 'DELETE' });
+                await fetch(`${API}/api/admin/materials/${id}`, { method: 'DELETE' });
                 loadMaterials();
             } catch (e) { alert('删除失败'); }
         };
