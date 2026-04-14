@@ -13,7 +13,7 @@ class AIScorer {
         };
 
         // 后端API地址
-        this.API_BASE_URL = 'https://color-adjustment-production.up.railway.app';
+        this.API_URL = 'https://color-adjustment-production.up.railway.app';
 
         // 加载全局颜色库
         this.loadGlobalColorLibrary();
@@ -131,7 +131,7 @@ class AIScorer {
 
         try {
             // 尝试调用后端AI评分API
-            const response = await fetch(`${this.API_BASE_URL}/api/ai-score`, {
+            const response = await fetch(`${this.API_URL}/api/ai-score`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

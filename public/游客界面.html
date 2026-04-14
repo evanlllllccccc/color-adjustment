@@ -389,7 +389,7 @@
                 try {
                     // 假设后端提供公开作品列表接口，支持按热度排序
                     // 可根据实际 API 调整参数，例如 ?sort=likes&limit=6
-                    const response = await fetch(`${API_BASE}/api/works/public?sort=likes&limit=6`);
+                    const response = await fetch(`${API}/api/works/public?sort=likes&limit=6`);
 
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}`);

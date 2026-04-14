@@ -216,7 +216,7 @@
 
         async function loadComments() {
             try {
-                const res = await fetch(`${API_BASE}/api/comments`);
+                const res = await fetch(`${API}/api/comments`);
                 const data = await res.json();
                 allComments = data || [];
                 document.getElementById('totalComments').innerText = allComments.length;
@@ -251,7 +251,7 @@
         window.deleteComment = async function (id) {
             if (!confirm('确定删除这条评论？')) return;
             try {
-                await fetch(`${API_BASE}/api/comment/${id}`, { method: 'DELETE' });
+                await fetch(`${API}/api/comment/${id}`, { method: 'DELETE' });
                 allComments = allComments.filter(c => c.id !== id);
                 render();
                 document.getElementById('totalComments').innerText = allComments.length;
