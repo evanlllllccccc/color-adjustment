@@ -59,6 +59,13 @@ const upload = multer({
 
 console.log('📁 数据库路径:', dbPath);
 
+// 确保数据库目录存在
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+    console.log('📁 创建数据库目录:', dbDir);
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('❌ 数据库连接失败:', err.message);
