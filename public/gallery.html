@@ -464,36 +464,28 @@
        // 改成你的后端地址
        const API = 'https://color-adjustment-production.up.railway.app';
 
-    let allWorks = [];
-    let currentFilter = 'all';
-    let currentUser = null;
+       let allWorks = [];
+       let currentFilter = 'all';
+       let currentUser = null;
 
-    // 读取当前登录用户
-    function getCurrentUser() {
-        const u = localStorage.getItem('currentUser');
-        return u ? JSON.parse(u) : null;
-    }
+       function getCurrentUser() {
+           const u = localStorage.getItem('currentUser');
+           return u ? JSON.parse(u) : null;
+       }
 
-    window.onload = async function () {
-        currentUser = getCurrentUser();
-        if (currentUser) {
-            document.getElementById('followingBtn').style.display = 'inline-block';
-        }
-        await loadWorks();
-    };
+       window.onload = async function () {
+           currentUser = getCurrentUser();
+           if (currentUser) {
+               document.getElementById('followingBtn').style.display = 'inline-block';
+           }
+           await loadWorks();
+       };
 
-    // ========== 从后端加载所有公开作品 ==========
-       // ========== 作品（我的作品） ==========
-       async function loadWorks() { {
+       async function loadWorks() {
            try {
                const res = await fetch(`${API}/api/works`);
                const data = await res.json();
-
-               // 后端直接返回数组
                allWorks = Array.isArray(data) ? data : (data.works || []);
-
-               console.log('作品库原始数据:', data);
-               console.log('处理后的works:', allWorks);
 
                if (!allWorks || allWorks.length === 0) {
                    document.getElementById('galleryGrid').innerHTML =
@@ -501,7 +493,6 @@
                    return;
                }
 
-               // 统一数据格式
                allWorks = allWorks.map(w => ({
                    id: w.id,
                    title: w.title || '未命名',
@@ -516,7 +507,6 @@
 
                applyFilterAndSort();
                renderGallery();
-
            } catch (e) {
                console.error('加载作品失败', e);
                document.getElementById('galleryGrid').innerHTML =
@@ -524,187 +514,154 @@
            }
        }
 
-    function applyFilterAndSort() {
-        switch (currentFilter) {
-            case 'hot':
-                allWorks.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-                break;
-            case 'new':
-                allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-                break;
-            default:
-                allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
-        }
-    }
+       function applyFilterAndSort() {
+           if (currentFilter === 'hot') {
+               allWorks.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+           } else {
+               allWorks.sort((a, b) => new Date(b.time) - new Date(a.time));
+           }
+       }
 
-    window.setFilter = function(type) {
-        currentFilter = type;
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        applyFilterAndSort();
-        renderGallery();
-    };
+       window.setFilter = function (type) {
+           currentFilter = type;
+           document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+           event.target.classList.add('active');
+           applyFilterAndSort();
+           renderGallery();
+       };
 
-    window.filterWorks = function() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allWorks.filter(work =>
-            work.title.toLowerCase().includes(keyword) ||
-            work.author.toLowerCase().includes(keyword)
-        );
-        renderGallery(filtered);
-    };
+       window.filterWorks = function () {
+           const keyword = document.getElementById('searchInput').value.toLowerCase();
+           const filtered = allWorks.filter(work =>
+               work.title.toLowerCase().includes(keyword) ||
+               work.author.toLowerCase().includes(keyword)
+           );
+           renderGallery(filtered);
+       };
 
-    function renderGallery(works = allWorks) {
-        const grid = document.getElementById('galleryGrid');
-        if (!works || works.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <div style="font-size:48px; margin-bottom:15px;">🎨</div>
-                    暂无作品<br>
-                    <a href="染色界面.html" style="color:#b17a54;">去创作 →</a>
-                </div>`;
-            return;
-        }
+       function renderGallery(works = allWorks) {
+           const grid = document.getElementById('galleryGrid');
+           if (!works || works.length === 0) {
+               grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">
+            <div style="font-size:48px; margin-bottom:15px;">🎨</div>
+            暂无作品<br>
+            <a href="染色界面.html" style="color:#b17a54;">去创作 →</a>
+        </div>`;
+               return;
+           }
 
-        grid.innerHTML = works.map(work => `
-            <div class="work-card">
-                <img src="${work.img}" class="work-image" onclick="openLightbox('${work.id}','${work.img}','${escapeHtml(work.title)}')" onerror="this.src='https://picsum.photos/300/200?random=${work.id}'">
-                <div class="work-content">
-                    <div class="work-title" onclick="openLightbox('${work.id}','${work.img}','${escapeHtml(work.title)}')">${escapeHtml(work.title)}</div>
-                    <div class="work-author">
-                        <img src="${work.authorAvatar}" class="author-avatar" onerror="this.src='https://picsum.photos/40/40'">
-                        <span class="author-name">${escapeHtml(work.author)}</span>
+           grid.innerHTML = works.map(work => `
+        <div class="work-card">
+            <img src="${work.img}" class="work-image" onclick="openLightbox('${work.id}','${work.img}','${escapeHtml(work.title)}')" onerror="this.src='https://picsum.photos/300/200?random=${work.id}'">
+            <div class="work-content">
+                <div class="work-title" onclick="openLightbox('${work.id}','${work.img}','${escapeHtml(work.title)}')">${escapeHtml(work.title)}</div>
+                <div class="work-author">
+                    <img src="${work.authorAvatar}" class="author-avatar" onerror="this.src='https://picsum.photos/40/40'">
+                    <span class="author-name">${escapeHtml(work.author)}</span>
+                </div>
+                <div class="work-stats">
+                    <span>👁 ${work.views || 0}</span>
+                    <span>❤️ ${work.likes || 0}</span>
+                    <span>💬 ${work.comments?.length || 0}</span>
+                </div>
+                <div class="work-actions">
+                    <button class="action-btn" onclick="likeWork(${work.id})">❤️ 点赞</button>
+                    <button class="action-btn" onclick="toggleComments(${work.id})">💬 评论</button>
+                </div>
+                <div class="comments-section" id="comments-${work.id}">
+                    <div class="comment-list" id="commentList-${work.id}">
+                        ${renderComments(work.comments)}
                     </div>
-                    <div class="work-stats">
-                        <span>👁 ${work.views || 0}</span>
-                        <span>❤️ ${work.likes || 0}</span>
-                        <span>💬 ${work.comments?.length || 0}</span>
-                    </div>
-                    <div class="work-actions">
-                        <button class="action-btn" onclick="likeWork(${work.id})">❤️ 点赞</button>
-                        <button class="action-btn" onclick="toggleComments(${work.id})">💬 评论</button>
-                    </div>
-                    <div class="comments-section" id="comments-${work.id}">
-                        <div class="comment-list" id="commentList-${work.id}">
-                            ${renderComments(work.comments)}
-                        </div>
-                        ${currentUser ? `
-                        <div class="comment-input-box">
-                            <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="输入评论..." onkeypress="if(event.key==='Enter'){event.preventDefault();submitComment(${work.id});}">
-                            <button type="button" class="comment-submit" onclick="submitComment(${work.id})">发送</button>
-                             </div>
-                        </div>
-                        ` : '<div style="color:#a87f61;padding:8px;">请先登录后评论</div>'}
-                    </div>
+                    ${currentUser ? `
+                    <div class="comment-input-box">
+                        <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="输入评论..." onkeypress="if(event.key==='Enter'){event.preventDefault();submitComment(${work.id});}">
+                        <button class="comment-submit" onclick="submitComment(${work.id})">发送</button>
+                    </div>` : '<div style="color:#a87f61;padding:8px;">请先登录后评论</div>'}
                 </div>
             </div>
-        `).join('');
-    }
+        </div>
+    `).join('');
+       }
 
-    function renderComments(comments) {
-        if (!comments || comments.length === 0) {
-            return '<div style="color:#a87f61;padding:8px;">暂无评论</div>';
-        }
-        return comments.map(c => `
-            <div class="comment-item">
-                <span class="comment-author">${escapeHtml(c.author || c.fromUser || '用户')}:</span>
-                <span class="comment-text">${escapeHtml(c.text || c.content)}</span>
-                <div class="comment-time">${new Date(c.time || c.createdAt).toLocaleString()}</div>
-            </div>
-        `).join('');
-    }
+       function renderComments(comments) {
+           if (!comments || comments.length === 0) return '<div style="color:#a87f61;padding:8px;">暂无评论</div>';
+           return comments.map(c => `
+        <div class="comment-item">
+            <span class="comment-author">${escapeHtml(c.author || c.fromUser || '用户')}:</span>
+            <span class="comment-text">${escapeHtml(c.text || c.content)}</span>
+            <div class="comment-time">${new Date(c.time || c.createdAt).toLocaleString()}</div>
+        </div>
+    `).join('');
+       }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+       function escapeHtml(text) {
+           if (!text) return '';
+           const div = document.createElement('div');
+           div.textContent = text;
+           return div.innerHTML;
+       }
 
-    // ========== 点赞 ==========
-    window.likeWork = async function(workId) {
-        if (!currentUser) {
-            alert('请先登录');
-            return;
-        }
-        try {
-            const res = await fetch(API + `/api/works/${workId}/like`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.id })
-            });
-            const data = await res.json();
-            if (data.success) {
-                // 更新本地数据
-                const work = allWorks.find(w => w.id == workId);
-                if (work) work.likes = (work.likes || 0) + 1;
-                renderGallery();
-            } else {
-                alert(data.msg || '点赞失败');
-            }
-        } catch (e) {
-            alert('网络错误，点赞失败');
-        }
-    };
-
-    // ========== 评论 ==========
-    window.toggleComments = function(id) {
-        const el = document.getElementById(`comments-${id}`);
-        el.classList.toggle('show');
-    };
-
-           window.submitComment = async function (workId) {
-               if (!currentUser) {
-                   alert('请先登录');
-                   return;
+       window.likeWork = async function (workId) {
+           if (!currentUser) { alert('请先登录'); return; }
+           try {
+               const res = await fetch(API + `/api/works/${workId}/like`, {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ userId: currentUser.id })
+               });
+               const data = await res.json();
+               if (data.success) {
+                   const work = allWorks.find(w => w.id == workId);
+                   if (work) work.likes = (work.likes || 0) + 1;
+                   renderGallery();
+               } else {
+                   alert(data.msg || '点赞失败');
                }
-               const input = document.getElementById(`commentInput-${workId}`);
-               const content = input.value.trim();
-               if (!content) return;
+           } catch (e) { alert('网络错误，点赞失败'); }
+       };
 
-               try {
-                   const res = await fetch(API + '/api/comments', {
-                       method: 'POST',
-                       headers: { 'Content-Type': 'application/json' },
-                       body: JSON.stringify({
-                           userId: currentUser.id,
-                           workId: workId,
-                           content: content
-                       })
-                   });
-                   const data = await res.json();
-                   if (data.success) {
-                       input.value = '';
-                       // 重新加载作品以获取最新评论
-                       await loadWorks();
-                       // 自动展开评论区域
-                       setTimeout(() => {
-                           const el = document.getElementById(`comments-${workId}`);
-                           if (el) el.classList.add('show');
-                       }, 100);
-                   } else {
-                       alert(data.msg || '评论失败');
-                   }
-               } catch (e) {
-                   alert('网络错误，评论失败');
+       window.toggleComments = function (id) {
+           document.getElementById(`comments-${id}`).classList.toggle('show');
+       };
+
+       window.submitComment = async function (workId) {
+           if (!currentUser) { alert('请先登录'); return; }
+           const input = document.getElementById(`commentInput-${workId}`);
+           const content = input.value.trim();
+           if (!content) return;
+           try {
+               const res = await fetch(API + '/api/comments', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ userId: currentUser.id, workId, content })
+               });
+               const data = await res.json();
+               if (data.success) {
+                   input.value = '';
+                   await loadWorks();
+                   setTimeout(() => {
+                       const el = document.getElementById(`comments-${workId}`);
+                       if (el) el.classList.add('show');
+                   }, 100);
+               } else {
+                   alert(data.msg || '评论失败');
                }
-           };
+           } catch (e) { alert('网络错误，评论失败'); }
+       };
 
-    // ========== 图片预览 ==========
-    window.openLightbox = function(id, img, title) {
-        document.getElementById('lightboxImg').src = img;
-        document.getElementById('lightboxInfo').innerHTML = `<h3>${title}</h3>`;
-        document.getElementById('lightbox').classList.add('show');
-    };
+       window.openLightbox = function (id, img, title) {
+           document.getElementById('lightboxImg').src = img;
+           document.getElementById('lightboxInfo').innerHTML = `<h3>${title}</h3>`;
+           document.getElementById('lightbox').classList.add('show');
+       };
 
-    window.closeLightbox = function() {
-        document.getElementById('lightbox').classList.remove('show');
-    };
+       window.closeLightbox = function () {
+           document.getElementById('lightbox').classList.remove('show');
+       };
 
-    // 私信相关函数（占位）
-    window.openMessageModal = function() {};
-    window.closeMessageModal = function() {};
-    window.sendMessage = function() {};
+       window.openMessageModal = function () { };
+       window.closeMessageModal = function () { };
+       window.sendMessage = function () { };
 </script>
     <script src="ai-chat.js"></script>
 </body>

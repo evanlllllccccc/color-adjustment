@@ -776,48 +776,30 @@
 
         async function loadRankings() {
             try {
-                // 使用 /api/works/ 直接返回数组，或兼容 /api/works/public
-                const response = await fetch(`${API}/api/works/`);
+                const response = await fetch(`${API}/api/works/public`);
+                if (!response.ok) throw new Error('请求失败');
                 const data = await response.json();
+                const works = data.works || data || [];
+                console.log('从后端获取作品:', works.length);
 
-                console.log('排行榜原始数据:', data);
+                allWorks = works.map(work => ({
+                    ...work,
+                    img: work.imageUrl || work.img || '',
+                    account: work.author?.account || work.authorName || '匿名',
+                    authorAvatar: work.author?.avatar || 'https://picsum.photos/200/200?random=' + work.id,
+                    aiScore: work.ai_score || { harmony: 70, innovation: 65, popularity: 50 },
+                    totalScore: (work.ai_score?.harmony || 70) * 0.25 + (work.ai_score?.innovation || 65) * 0.25 + Math.min(100, ((work.views || 0) / 10 + (work.likes || 0) * 2)) * 0.5
+                }));
 
-                // 兼容两种返回格式：数组 或 {works: [...]}
-                let works = Array.isArray(data) ? data : (data.works || []);
-
-                if (!Array.isArray(works)) {
-                    throw new Error('后端返回格式错误');
+                // 时间过滤
+                if (currentTab === 'week') {
+                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    allWorks = allWorks.filter(w => new Date(w.time || w.created_at) > weekAgo);
+                } else if (currentTab === 'month') {
+                    const monthAgo = new Date();
+                    monthAgo.setMonth(monthAgo.getMonth() - 1);
+                    allWorks = allWorks.filter(w => new Date(w.time || w.created_at) > monthAgo);
                 }
-
-                allWorks = [];
-
-                works.forEach((work) => {
-                    const aiScore = getOrCalculateAIScore(work);
-
-                    // 时间过滤
-                    let includeWork = true;
-                    const workDate = new Date(work.created_at || work.time || Date.now());
-
-                    if (currentTab === 'week') {
-                        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                        includeWork = workDate > weekAgo;
-                    } else if (currentTab === 'month') {
-                        const monthAgo = new Date();
-                        monthAgo.setMonth(monthAgo.getMonth() - 1);
-                        includeWork = workDate > monthAgo;
-                    }
-
-                    if (includeWork) {
-                        allWorks.push({
-                            ...work,
-                            img: work.imageUrl || work.img || work.colors || '',
-                            account: work.author || work.authorName || work.username || '匿名',
-                            authorAvatar: work.authorAvatar || `https://picsum.photos/200/200?random=${work.id}`,
-                            aiScore: aiScore,
-                            totalScore: calculateTotalScore(work, aiScore)
-                        });
-                    }
-                });
 
                 // 排序
                 if (currentTab === 'ai') {
@@ -829,23 +811,13 @@
 
                 renderRankings();
                 document.getElementById('updateTime').innerText = '最后更新：' + new Date().toLocaleTimeString();
-
             } catch (error) {
                 console.error('加载排行榜失败:', error);
-                loadLocalRankings();
+                document.getElementById('rankContainer').innerHTML = '<div class="empty-box">加载失败，请检查网络</div>';
             }
         }
 
-        // 备用：从本地加载
-        function loadLocalRankings() {
-            allWorks = [];
-            const allAccounts = new Set();
-
-            for (let key in localStorage) {
-                if (key.startsWith("myWorks_")) {
-                    allAccounts.add(key.replace("myWorks_", ""));
-                }
-            }
+       
 
             allAccounts.forEach(account => {
                 const works = JSON.parse(localStorage.getItem("myWorks_" + account) || "[]");
