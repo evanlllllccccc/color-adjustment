@@ -817,45 +817,6 @@
             }
         }
 
-       
-
-            allAccounts.forEach(account => {
-                const works = JSON.parse(localStorage.getItem("myWorks_" + account) || "[]");
-                const userDetails = JSON.parse(localStorage.getItem("userDetails_" + account) || "{}");
-
-                works.forEach((work, idx) => {
-                    const aiScore = getOrCalculateAIScore(work, account, idx);
-
-                    let includeWork = true;
-                    const workDate = new Date(work.time || Date.now());
-
-                    if (currentTab === 'week') {
-                        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                        includeWork = workDate > weekAgo;
-                    } else if (currentTab === 'month') {
-                        const monthAgo = new Date();
-                        monthAgo.setMonth(monthAgo.getMonth() - 1);
-                        includeWork = workDate > monthAgo;
-                    }
-
-                    if (includeWork) {
-                        allWorks.push({
-                            ...work,
-                            img: work.colors || work.img || '', 
-                            account: account,
-                            authorAvatar: userDetails.avatar || `https://picsum.photos/200/200?random=${account.charCodeAt(0)}`,
-                            aiScore: aiScore,
-                            totalScore: calculateTotalScore(work, aiScore)
-                        });
-                    }
-                });
-            });
-
-            allWorks.sort((a, b) => b.totalScore - a.totalScore);
-            renderRankings();
-            document.getElementById('updateTime').innerText = '最后更新：' + new Date().toLocaleTimeString() + ' (本地模式)';
-        }
-
         function getOrCalculateAIScore(work, account, idx) {
             // 优先使用后端返回的AI评分
             if (work.ai_score) {
