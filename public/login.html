@@ -585,7 +585,7 @@
             <div class="panel" id="works" style="display:none;">
                 <div class="panel-title">
                     <span>我的作品</span>
-                    <button class="btn-small btn-edit" onclick="loadWorks()">刷新</button>
+                    <button class="btn-small btn-edit" onclick="window.loadWorks()">刷新</button>
                 </div>
                 <div class="work-grid" id="worksGrid">
                     <div class="empty">暂无作品，快去染色工坊创作吧～</div>
@@ -790,7 +790,7 @@
             };
 
             // ========== 作品（我的作品） ==========
-            async function loadWorks() {
+            window.loadWorks = async function () {
                 const grid = document.getElementById('worksGrid');
                 if (!currentUser) return;
                 try {
@@ -950,7 +950,7 @@
             };
 
             // ========== 收到的评论（模拟数据，可对接后端） ==========
-            async function loadComments() {
+            window.loadComments = async function () {
                 const list = document.getElementById('commentsList');
                 // 尝试从后端获取，若无则显示模拟
                 try {
@@ -981,7 +981,7 @@
             };
 
             // ========== 收到的点赞 ==========
-            async function loadLikes() {
+            window.loadLikes = async function () {
                 const list = document.getElementById('likesList');
                 try {
                     const likes = await request(`/api/likes/received?userId=${currentUser.id}`);
@@ -995,7 +995,7 @@
             }
 
             // ========== 私信（完整实现，依赖后端接口） ==========
-            async function loadMessages() {
+            window.loadMessages = async function () {
                 const chatListDiv = document.getElementById('chatList');
                 const chatWin = document.getElementById('chatWindow');
                 try {

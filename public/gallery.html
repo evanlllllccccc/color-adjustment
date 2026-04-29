@@ -483,7 +483,8 @@
     };
 
     // ========== 从后端加载所有公开作品 ==========
-       async function loadWorks() {
+       // ========== 作品（我的作品） ==========
+       async function loadWorks() { {
            try {
                const res = await fetch(`${API}/api/works`);
                const data = await res.json();
@@ -589,8 +590,9 @@
                         </div>
                         ${currentUser ? `
                         <div class="comment-input-box">
-                            <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="输入评论...">
-                           <button type="button" class="comment-submit" onclick="submitComment(${work.id}, event)">发送</button>
+                            <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="输入评论..." onkeypress="if(event.key==='Enter'){event.preventDefault();submitComment(${work.id});}">
+                            <button type="button" class="comment-submit" onclick="submitComment(${work.id})">发送</button>
+                             </div>
                         </div>
                         ` : '<div style="color:#a87f61;padding:8px;">请先登录后评论</div>'}
                     </div>
@@ -651,43 +653,42 @@
         el.classList.toggle('show');
     };
 
-       window.submitComment = async function (workId) {
-           if (event) event.preventDefault();  // ← 阻止表单提交
-        if (!currentUser) {
-            alert('请先登录');
-            return;
-        }
-        const input = document.getElementById(`commentInput-${workId}`);
-        const content = input.value.trim();
-        if (!content) return;
+           window.submitComment = async function (workId) {
+               if (!currentUser) {
+                   alert('请先登录');
+                   return;
+               }
+               const input = document.getElementById(`commentInput-${workId}`);
+               const content = input.value.trim();
+               if (!content) return;
 
-        try {
-            const res = await fetch(API + '/api/comments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: currentUser.id,
-                    workId: workId,
-                    content: content
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                input.value = '';
-                // 重新加载作品以获取最新评论
-                await loadWorks();
-                // 自动展开评论区域
-                setTimeout(() => {
-                    const el = document.getElementById(`comments-${workId}`);
-                    if (el) el.classList.add('show');
-                }, 100);
-            } else {
-                alert(data.msg || '评论失败');
-            }
-        } catch (e) {
-            alert('网络错误，评论失败');
-        }
-    };
+               try {
+                   const res = await fetch(API + '/api/comments', {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify({
+                           userId: currentUser.id,
+                           workId: workId,
+                           content: content
+                       })
+                   });
+                   const data = await res.json();
+                   if (data.success) {
+                       input.value = '';
+                       // 重新加载作品以获取最新评论
+                       await loadWorks();
+                       // 自动展开评论区域
+                       setTimeout(() => {
+                           const el = document.getElementById(`comments-${workId}`);
+                           if (el) el.classList.add('show');
+                       }, 100);
+                   } else {
+                       alert(data.msg || '评论失败');
+                   }
+               } catch (e) {
+                   alert('网络错误，评论失败');
+               }
+           };
 
     // ========== 图片预览 ==========
     window.openLightbox = function(id, img, title) {

@@ -776,23 +776,22 @@
 
         async function loadRankings() {
             try {
-                // 从后端API获取所有作品
-                const response = await fetch(`${API}/api/works/`);  // 用 /api/works/ 直接返回数组
-                const works = await response.json();
+                // 使用 /api/works/ 直接返回数组，或兼容 /api/works/public
+                const response = await fetch(`${API}/api/works/`);
+                const data = await response.json();
 
-                console.log('排行榜原始数据:', works);
+                console.log('排行榜原始数据:', data);
 
-                // 确保是数组
+                // 兼容两种返回格式：数组 或 {works: [...]}
+                let works = Array.isArray(data) ? data : (data.works || []);
+
                 if (!Array.isArray(works)) {
-                    console.error('后端返回不是数组:', works);
-                    throw new Error('数据格式错误');
+                    throw new Error('后端返回格式错误');
                 }
 
                 allWorks = [];
 
-                // 处理每个作品
                 works.forEach((work) => {
-                    // 获取或计算AI评分
                     const aiScore = getOrCalculateAIScore(work);
 
                     // 时间过滤
@@ -811,16 +810,16 @@
                     if (includeWork) {
                         allWorks.push({
                             ...work,
-                            img: work.colors || work.img || '', 
-                            account: work.author || work.user_id,
-                            authorAvatar: work.author_avatar || `https://picsum.photos/200/200?random=${work.id}`,
+                            img: work.imageUrl || work.img || work.colors || '',
+                            account: work.author || work.authorName || work.username || '匿名',
+                            authorAvatar: work.authorAvatar || `https://picsum.photos/200/200?random=${work.id}`,
                             aiScore: aiScore,
                             totalScore: calculateTotalScore(work, aiScore)
                         });
                     }
                 });
 
-                // 根据当前标签排序
+                // 排序
                 if (currentTab === 'ai') {
                     allWorks.sort((a, b) => (b.aiScore.harmony * 0.4 + b.aiScore.innovation * 0.4 + b.aiScore.popularity * 0.2) -
                         (a.aiScore.harmony * 0.4 + a.aiScore.innovation * 0.4 + a.aiScore.popularity * 0.2));
@@ -833,7 +832,6 @@
 
             } catch (error) {
                 console.error('加载排行榜失败:', error);
-                // 如果后端失败，使用本地数据作为备用
                 loadLocalRankings();
             }
         }
