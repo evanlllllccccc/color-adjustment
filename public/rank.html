@@ -776,7 +776,7 @@
 
         async function loadRankings() {
             try {
-                const response = await fetch(`${API}/api/works/public`);
+                const response = await fetch(`${API}/api/works/`);
                 if (!response.ok) throw new Error('请求失败');
                 const data = await response.json();
                 console.log('排行榜后端返回:', data); // 调试用，上线后可删
