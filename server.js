@@ -440,6 +440,7 @@ app.get('/api/works/public', (req, res) => {
             dyeRecords.colors AS imageUrl,
             dyeRecords.views,
             IFNULL(dyeRecords.score, 0) AS likes,
+            dyeRecords.comment,
             dyeRecords.createTime,
             users.username AS authorName,
             users.avatar AS authorAvatar
@@ -452,12 +453,9 @@ app.get('/api/works/public', (req, res) => {
     db.all(sql, (err, rows) => {
         if (err) {
             console.error('❌ 获取公开作品失败:', err.message);
-            // 即使出错也返回一个标准结构
             return res.json({ works: [], error: err.message });
         }
-
         console.log(`✅ 查询到 ${rows?.length || 0} 件公开作品`);
-
         const works = (rows || []).map(row => ({
             id: row.id,
             title: row.title || '未命名作品',
@@ -471,9 +469,12 @@ app.get('/api/works/public', (req, res) => {
             views: row.views || 0,
             likes: row.likes || 0,
             time: row.createTime,
-            comments: []
+            comments: row.comment ? [{
+                author: row.authorName || '匿名',
+                content: row.comment,
+                time: row.createTime
+            }] : []
         }));
-
         res.json({ works });
     });
 });
@@ -522,6 +523,7 @@ app.get('/api/works', (req, res) => {
             dyeRecords.colors AS imageUrl,
             dyeRecords.views,
             IFNULL(dyeRecords.score, 0) AS likes,
+            dyeRecords.comment,   -- 加上这一行
             dyeRecords.createTime AS time,
             users.username AS author,
             users.username AS authorName,
@@ -533,9 +535,18 @@ app.get('/api/works', (req, res) => {
     `, (err, rows) => {
         if (err) {
             console.error('获取作品失败:', err);
-            return res.json([]);  // 出错返回空数组
+            return res.json([]);
         }
-        res.json(rows);  // 直接返回数组
+        // 把 comment 字段包装成数组，让前端能正常渲染
+        const works = rows.map(row => ({
+            ...row,
+            comments: row.comment ? [{
+                author: row.authorName || '用户',
+                content: row.comment,
+                time: row.time
+            }] : []
+        }));
+        res.json(works);
     });
 });
 
