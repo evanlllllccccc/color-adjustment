@@ -8,7 +8,7 @@ const app = express();
 // 先定义一个“永久仓库”的位置
 const persisDir = process.env.NODE_ENV === 'production'
     ? '/app/data'                    // ← Railway 上：用 Volume 挂载的永久目录
-    : path.join(__dirname, 'data');   // ← 你自己电脑上：项目里的 data 文件夹
+    : path.join(__dirname, 'dataa');   // ← 你自己电脑上：项目里的 data 文件夹
 
 // 数据库就放在永久仓库的 sqlite 子文件夹里
 const dbPath = path.join(persisDir, 'sqlite', 'database.db');
