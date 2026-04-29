@@ -431,7 +431,9 @@ app.get('/api/images', (req, res) => {
 
 // 获取所有公开作品（供作品库、排行榜使用）
 app.get('/api/works/public', (req, res) => {
-    db.all(`
+    console.log('📢 /api/works/public 被调用了');
+
+    const sql = `
         SELECT 
             dyeRecords.id,
             dyeRecords.title,
@@ -445,12 +447,18 @@ app.get('/api/works/public', (req, res) => {
         LEFT JOIN users ON dyeRecords.userId = users.id 
         WHERE dyeRecords.draft = 0 
         ORDER BY dyeRecords.createTime DESC
-    `, (err, rows) => {
+    `;
+
+    db.all(sql, (err, rows) => {
         if (err) {
-            console.error('获取公开作品失败:', err);
-            return res.status(500).json({ error: err.message });
+            console.error('❌ 获取公开作品失败:', err.message);
+            // 即使出错也返回一个标准结构
+            return res.json({ works: [], error: err.message });
         }
-        const works = rows.map(row => ({
+
+        console.log(`✅ 查询到 ${rows?.length || 0} 件公开作品`);
+
+        const works = (rows || []).map(row => ({
             id: row.id,
             title: row.title || '未命名作品',
             imageUrl: row.imageUrl,
@@ -465,6 +473,7 @@ app.get('/api/works/public', (req, res) => {
             time: row.createTime,
             comments: []
         }));
+
         res.json({ works });
     });
 });
