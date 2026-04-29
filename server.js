@@ -5,6 +5,23 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const app = express();
+// 先定义一个“永久仓库”的位置
+const persisDir = process.env.NODE_ENV === 'production'
+    ? '/app/data'                    // ← Railway 上：用 Volume 挂载的永久目录
+    : path.join(__dirname, 'data');   // ← 你自己电脑上：项目里的 data 文件夹
+
+// 数据库就放在永久仓库的 sqlite 子文件夹里
+const dbPath = path.join(persisDir, 'sqlite', 'database.db');
+
+// 上传的文件就放在永久仓库的 uploads 子文件夹里
+const uploadDir = path.join(persisDir, 'uploads');
+// 确保上传目录存在
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('📁 创建上传目录:', uploadDir);
+}
+app.use('/uploads', express.static(uploadDir));
+
 
 // ====================== 跨域配置 ======================
 // ====================== 跨域配置 ======================
@@ -17,19 +34,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ====================== 上传目录配置 ======================
-// 生产环境使用 Railway Volume，开发环境用本地
-const uploadDir = process.env.NODE_ENV === 'production'
-    ? '/app/public/uploads'  // Railway Volume 挂载点
-    : path.join(__dirname, 'public', 'uploads');
 
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('📁 创建上传目录:', uploadDir);
-}
-
-
-// 确保静态文件服务指向正确路径
 app.use('/uploads', express.static(uploadDir));
 
 const storage = multer.diskStorage({
@@ -51,10 +56,6 @@ const upload = multer({
     }
 });
 
-// ====================== 数据库初始化 ======================
-const dbPath = process.env.NODE_ENV === 'production'
-    ? path.join('/app', 'data', 'database.db')
-    : path.join(__dirname, 'database.db');
 
 console.log('📁 数据库路径:', dbPath);
 
