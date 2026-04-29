@@ -433,30 +433,27 @@ app.get('/api/images', (req, res) => {
 app.get('/api/works/public', (req, res) => {
     console.log('📢 /api/works/public 被调用了');
 
-    const sql = `
+    db.all(`
         SELECT 
             dyeRecords.id,
             dyeRecords.title,
             dyeRecords.colors AS imageUrl,
-            dyeRecords.views,
             IFNULL(dyeRecords.score, 0) AS likes,
+            dyeRecords.views,
             dyeRecords.comment,
             dyeRecords.createTime,
             users.username AS authorName,
             users.avatar AS authorAvatar
         FROM dyeRecords 
         LEFT JOIN users ON dyeRecords.userId = users.id 
-        WHERE dyeRecords.draft = 0 
         ORDER BY dyeRecords.createTime DESC
-    `;
-
-    db.all(sql, (err, rows) => {
+    `, (err, rows) => {
         if (err) {
-            console.error('❌ 获取公开作品失败:', err.message);
+            console.error('❌ 获取作品失败:', err.message);
             return res.json({ works: [], error: err.message });
         }
-        console.log(`✅ 查询到 ${rows?.length || 0} 件公开作品`);
-        const works = (rows || []).map(row => ({
+        console.log(`✅ 查询到 ${rows.length} 件作品`);
+        const works = rows.map(row => ({
             id: row.id,
             title: row.title || '未命名作品',
             imageUrl: row.imageUrl,
@@ -466,8 +463,8 @@ app.get('/api/works/public', (req, res) => {
                 account: row.authorName || '匿名',
                 avatar: row.authorAvatar
             },
-            views: row.views || 0,
             likes: row.likes || 0,
+            views: row.views || 0,
             time: row.createTime,
             comments: row.comment ? [{
                 author: row.authorName || '匿名',
