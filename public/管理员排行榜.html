@@ -227,7 +227,7 @@
 
         async function loadRank() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/works`);
+                const res = await fetch(`${API}/api/admin/works`);
                 const data = await res.json();
                 works = (data.works || data || []).map(w => ({
                     id: w.id, title: w.title || '未命名', img: w.imageUrl || w.img,

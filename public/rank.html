@@ -777,7 +777,7 @@
         async function loadRankings() {
             try {
                 // 从后端API获取所有作品
-                const response = await fetch(`${API_URL}/api/works/public`);
+                const response = await fetch(`${API}/api/works/public`);
                 if (!response.ok) throw new Error('获取作品失败');
 
                 const works = await response.json();
@@ -1043,7 +1043,7 @@
 
             try {
                 // 优先从后端获取作品
-                const response = await fetch(`${API_URL}/api/works/public`);
+                const response = await fetch(`${API}/api/works/public`);
                 const works = await response.json();
                 console.log('排行榜原始数据:', works);  // 添加调试
                 works.forEach(work => {

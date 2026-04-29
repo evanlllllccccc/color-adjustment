@@ -307,7 +307,8 @@
     </div>
 
     <script>
-        const API_BASE = ' ';
+        // 改成你的后端地址
+        const API = 'https://color-adjustment-production.up.railway.app';
         let allWorks = [], filteredWorks = [], currentFilter = 'all', currentWorkId = null;
 
         // 权限验证
@@ -322,7 +323,7 @@
 
         async function loadWorks() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/works`);
+                const res = await fetch(`${API}/api/admin/works`);
                 const data = await res.json();
                 allWorks = (data.works || data || []).map(w => ({
                     id: w.id, title: w.title || '未命名', img: w.imageUrl || w.img,
@@ -404,7 +405,7 @@
         window.deleteWork = async function (id) {
             if (!confirm('确定删除？')) return;
             try {
-                await fetch(`${API_BASE}/api/admin/works/${id}`, { method: 'DELETE' });
+                await fetch(`${API}/api/admin/works/${id}`, { method: 'DELETE' });
                 allWorks = allWorks.filter(w => w.id != id);
                 applyFilterAndSort(); updateStats(); render(); closeModal();
             } catch (e) { alert('删除失败'); }

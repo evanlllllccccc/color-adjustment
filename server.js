@@ -485,17 +485,21 @@ app.post('/api/comments', (req, res) => {
     });
 });
 
+
 // 获取作品（排行榜调用）
+// 获取作品（统一接口）
 app.get('/api/works', (req, res) => {
     db.all(`
         SELECT 
             dyeRecords.id,
             dyeRecords.title,
             dyeRecords.colors AS img,
+            dyeRecords.colors AS imageUrl,
             dyeRecords.views,
             IFNULL(dyeRecords.score, 0) AS likes,
             dyeRecords.createTime AS time,
             users.username AS author,
+            users.username AS authorName,
             users.avatar AS authorAvatar
         FROM dyeRecords 
         LEFT JOIN users ON dyeRecords.userId = users.id 
@@ -504,10 +508,9 @@ app.get('/api/works', (req, res) => {
     `, (err, rows) => {
         if (err) {
             console.error('获取作品失败:', err);
-            return res.status(500).json({ error: err.message });
+            return res.json([]);  // 出错返回空数组
         }
-        // 直接返回数组
-        res.json(rows);
+        res.json(rows);  // 直接返回数组
     });
 });
 
