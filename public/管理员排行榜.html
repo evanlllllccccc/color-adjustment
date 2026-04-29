@@ -229,12 +229,25 @@
             try {
                 const res = await fetch(`${API}/api/admin/works`);
                 const data = await res.json();
-                works = (data.works || data || []).map(w => ({
-                    id: w.id, title: w.title || '未命名', img: w.imageUrl || w.img,
-                    author: w.author?.account || '匿名', likes: w.likes || 0, views: w.views || 0
-                }));
+
+                console.log('【调试】管理员排行榜后端返回:', data);
+
+                works = (data.works || data || []).map(w => {
+                    console.log('【调试】单条作品字段:', Object.keys(w));  // ← 加这行
+                    return {
+                        id: w.id,
+                        title: w.title || '未命名',
+                        img: w.imageUrl || w.img || w.image_url || '',  // ← 多试几种可能
+                        author: w.author?.account || w.authorName || w.author_name || w.author || '匿名',
+                        likes: w.likes || 0,
+                        views: w.views || 0
+                    };
+                });
                 sortAndRender();
-            } catch (e) { document.getElementById('rankList').innerHTML = '<div class="empty">加载失败</div>'; }
+            } catch (e) {
+                console.error('加载失败:', e);  // ← 把错误也打印出来
+                document.getElementById('rankList').innerHTML = '<div class="empty">加载失败</div>';
+            }
         }
 
         function sortAndRender() {

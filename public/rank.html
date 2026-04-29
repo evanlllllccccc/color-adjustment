@@ -783,6 +783,11 @@
                 const works = await response.json();
                 console.log('从后端获取作品:', works.length);
 
+                console.log('【调试】排行榜后端返回:', works);
+                if (works.length > 0) {
+                    console.log('【调试】第一条字段:', Object.keys(works[0]));
+                }
+
                 allWorks = [];
 
                 // 处理每个作品
