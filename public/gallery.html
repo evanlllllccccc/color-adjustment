@@ -488,50 +488,38 @@
                const res = await fetch(`${API}/api/works`);
                const data = await res.json();
 
+               // 后端直接返回数组
+               allWorks = Array.isArray(data) ? data : (data.works || []);
+
                console.log('作品库原始数据:', data);
-               console.log('【调试】后端返回的原始数据:', data);
+               console.log('处理后的works:', allWorks);
 
-               // 修复：确保 works 是数组
-               let works = Array.isArray(data) ? data : (data.works || []);
-
-               if (works.length > 0) {
-                   console.log('【调试】第一条作品的所有字段:', Object.keys(works[0]));
-                   console.log('【调试】第一条作品完整数据:', works[0]);
-               }
-
-               if (!works || works.length === 0) {
-                   document.getElementById('worksGrid').innerHTML =
-                       '<div style="text-align:center;padding:40px;color:#a87f61;">暂无作品</div>';
+               if (!allWorks || allWorks.length === 0) {
+                   document.getElementById('galleryGrid').innerHTML =
+                       '<div class="empty-state" style="grid-column: 1/-1;">暂无作品</div>';
                    return;
                }
 
-               console.log('处理后的works:', works);
+               // 统一数据格式
+               allWorks = allWorks.map(w => ({
+                   id: w.id,
+                   title: w.title || '未命名',
+                   img: w.img || w.imageUrl || 'https://picsum.photos/300/200',
+                   author: w.author || w.authorName || '匿名',
+                   authorAvatar: w.authorAvatar || 'https://picsum.photos/40/40',
+                   likes: w.likes || 0,
+                   views: w.views || 0,
+                   time: w.time || new Date().toISOString(),
+                   comments: w.comments || []
+               }));
 
-               // 空数据处理
-               if (!works || works.length === 0) {
-                   document.getElementById('worksGrid').innerHTML =
-                       '<div style="text-align:center;padding:40px;color:#a87f61;">暂无作品</div>';
-                   return;
-               }
-
-               // 正常渲染
-               const grid = document.getElementById('worksGrid');
-               grid.innerHTML = works.map(work => `
-            <div class="work-item" onclick="viewWork(${work.id})">
-                <img src="${work.imageUrl || work.img || 'https://picsum.photos/300/200'}" 
-                     onerror="this.src='https://picsum.photos/300/200'">
-                <div class="work-info">
-                    <div class="work-title">${escapeHtml(work.title || '未命名')}</div>
-                    <div class="work-author">作者: ${escapeHtml(work.author || work.username || '匿名')}</div>
-                    <div class="work-stats">❤️ ${work.likes || 0} 👁️ ${work.views || 0}</div>
-                </div>
-            </div>
-        `).join('');
+               applyFilterAndSort();
+               renderGallery();
 
            } catch (e) {
                console.error('加载作品失败', e);
-               document.getElementById('worksGrid').innerHTML =
-                   '<div style="text-align:center;padding:40px;color:#c95a5a;">加载失败，请稍后重试</div>';
+               document.getElementById('galleryGrid').innerHTML =
+                   '<div class="empty-state" style="grid-column: 1/-1;">加载失败，请稍后重试</div>';
            }
        }
 
