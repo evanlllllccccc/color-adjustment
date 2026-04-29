@@ -18,7 +18,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ====================== 上传目录配置 ======================
-const uploadDir = path.join(__dirname, 'public', 'uploads');
+// 把上传目录指向 Volume 挂载点
+const uploadDir = process.env.NODE_ENV === 'production'
+    ? '/app/public/uploads'  // Railway Volume 挂载路径
+    : path.join(__dirname, 'public', 'uploads');
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// 确保静态文件服务指向正确路径
+app.use('/uploads', express.static(uploadDir));
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log('📁 创建上传目录:', uploadDir);

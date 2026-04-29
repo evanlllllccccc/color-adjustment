@@ -733,15 +733,24 @@
                     const base64 = e.target.result;
                     // 尝试上传到后端
                     try {
-                        const formData = new FormData();
-                        formData.append('avatar', file);
-                        formData.append('userId', currentUser.id);
-                        const resp = await fetch('/api/user/avatar', { method: 'POST', body: formData });
+                        const resp = await fetch(`${API}/api/users/profile`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                userId: currentUser.id,
+                                avatar: base64
+                            })
+                        });
                         const data = await resp.json();
-                        currentUser.avatar = data.url || base64;
+                        if (data.success) {
+                            currentUser.avatar = base64;
+                        } else {
+                            throw new Error(data.msg || '保存失败');
+                        }
                     } catch (err) {
                         // 降级：直接存 base64 到 localStorage
                         currentUser.avatar = base64;
+                        console.log('后端保存失败，使用本地存储:', err);
                     }
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     document.getElementById('userAvatar').src = currentUser.avatar;

@@ -777,15 +777,15 @@
         async function loadRankings() {
             try {
                 // 从后端API获取所有作品
-                const response = await fetch(`${API}/api/works/public`);
-                if (!response.ok) throw new Error('获取作品失败');
-
+                const response = await fetch(`${API}/api/works/`);  // 用 /api/works/ 直接返回数组
                 const works = await response.json();
-                console.log('从后端获取作品:', works.length);
 
-                console.log('【调试】排行榜后端返回:', works);
-                if (works.length > 0) {
-                    console.log('【调试】第一条字段:', Object.keys(works[0]));
+                console.log('排行榜原始数据:', works);
+
+                // 确保是数组
+                if (!Array.isArray(works)) {
+                    console.error('后端返回不是数组:', works);
+                    throw new Error('数据格式错误');
                 }
 
                 allWorks = [];
@@ -1048,13 +1048,18 @@
 
             try {
                 // 优先从后端获取作品
-                const response = await fetch(`${API}/api/works/public`);
-                const works = await response.json();
-                console.log('排行榜原始数据:', works);  // 添加调试
+                const response = await fetch(`${API}/api/works/`);
+                const data = await response.json();
+                console.log('排行榜原始数据:', data);  // 修复：打印data而不是未定义的works
+
+                // 兼容后端可能返回数组或 {works: [...]} 的情况
+                const works = Array.isArray(data) ? data : (data.works || []);
+
                 works.forEach(work => {
                     worksToScore.push({ work, id: work.id });
                 });
             } catch (e) {
+                console.log('后端获取失败，使用本地数据:', e);
                 // 后端失败，使用本地
                 for (let key in localStorage) {
                     if (key.startsWith("myWorks_")) {
@@ -1081,7 +1086,7 @@
                 // 如果有后端ID，发送到后端保存
                 if (id) {
                     try {
-                        await fetch(`${API_URL}/api/works/${id}/ai-score`, {
+                        await fetch(`${API}/api/works/${id}/ai-score`, {  // 修复：API_URL -> API
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({

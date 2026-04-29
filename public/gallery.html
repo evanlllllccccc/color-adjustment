@@ -590,7 +590,7 @@
                         ${currentUser ? `
                         <div class="comment-input-box">
                             <input type="text" class="comment-input" id="commentInput-${work.id}" placeholder="输入评论...">
-                            <button class="comment-submit" onclick="submitComment(${work.id})">发送</button>
+                           <button type="button" class="comment-submit" onclick="submitComment(${work.id}, event)">发送</button>
                         </div>
                         ` : '<div style="color:#a87f61;padding:8px;">请先登录后评论</div>'}
                     </div>
@@ -651,7 +651,8 @@
         el.classList.toggle('show');
     };
 
-    window.submitComment = async function(workId) {
+       window.submitComment = async function (workId) {
+           if (event) event.preventDefault();  // ← 阻止表单提交
         if (!currentUser) {
             alert('请先登录');
             return;
