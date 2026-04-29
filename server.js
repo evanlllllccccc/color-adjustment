@@ -53,7 +53,7 @@ const upload = multer({
 
 // ====================== 数据库初始化 ======================
 const dbPath = process.env.NODE_ENV === 'production'
-    ? path.join('/app', 'database.db')
+    ? path.join('/app', 'data', 'database.db')
     : path.join(__dirname, 'database.db');
 
 console.log('📁 数据库路径:', dbPath);
