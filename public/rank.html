@@ -779,7 +779,12 @@
                 const response = await fetch(`${API}/api/works/public`);
                 if (!response.ok) throw new Error('请求失败');
                 const data = await response.json();
-                const works = data.works || data || [];
+                console.log('排行榜后端返回:', data); // 调试用，上线后可删
+
+                // ✅ 确保 works 是数组，避免 .map 报错
+                let works = data.works || data;
+                if (!Array.isArray(works)) works = [];
+
                 console.log('从后端获取作品:', works.length);
 
                 allWorks = works.map(work => ({
@@ -788,7 +793,9 @@
                     account: work.author?.account || work.authorName || '匿名',
                     authorAvatar: work.author?.avatar || 'https://picsum.photos/200/200?random=' + work.id,
                     aiScore: work.ai_score || { harmony: 70, innovation: 65, popularity: 50 },
-                    totalScore: (work.ai_score?.harmony || 70) * 0.25 + (work.ai_score?.innovation || 65) * 0.25 + Math.min(100, ((work.views || 0) / 10 + (work.likes || 0) * 2)) * 0.5
+                    totalScore: (work.ai_score?.harmony || 70) * 0.25 +
+                        (work.ai_score?.innovation || 65) * 0.25 +
+                        Math.min(100, ((work.views || 0) / 10 + (work.likes || 0) * 2)) * 0.5
                 }));
 
                 // 时间过滤
@@ -803,8 +810,10 @@
 
                 // 排序
                 if (currentTab === 'ai') {
-                    allWorks.sort((a, b) => (b.aiScore.harmony * 0.4 + b.aiScore.innovation * 0.4 + b.aiScore.popularity * 0.2) -
-                        (a.aiScore.harmony * 0.4 + a.aiScore.innovation * 0.4 + a.aiScore.popularity * 0.2));
+                    allWorks.sort((a, b) =>
+                        (b.aiScore.harmony * 0.4 + b.aiScore.innovation * 0.4 + b.aiScore.popularity * 0.2) -
+                        (a.aiScore.harmony * 0.4 + a.aiScore.innovation * 0.4 + a.aiScore.popularity * 0.2)
+                    );
                 } else {
                     allWorks.sort((a, b) => b.totalScore - a.totalScore);
                 }

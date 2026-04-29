@@ -638,26 +638,26 @@
                const data = await res.json();
                if (data.success) {
                    input.value = '';
-                   // 重新获取当前作品的评论（只更新这一个作品）
+                   // 重新获取当前作品的评论，只更新这一个作品
                    const commentsRes = await fetch(`${API}/api/comments?workId=${workId}`);
                    const comments = await commentsRes.json();
                    const work = allWorks.find(w => w.id == workId);
                    if (work) {
                        work.comments = comments;
-                       // 更新评论数量显示
-                       const commentsSection = document.getElementById(`comments-${workId}`);
-                       if (commentsSection) {
-                           const commentList = commentsSection.querySelector('.comment-list');
-                           if (commentList) commentList.innerHTML = renderComments(comments);
-                       }
-                       // 更新评论计数
-                       const statsSpan = document.querySelector(`[onclick="toggleComments(${workId})"]`)?.closest('.work-actions')?.previousElementSibling;
-                       // 更简单的方法：重新渲染整个卡片
-                       renderGallery();
+                   }
+                   // 重新渲染整个画廊以显示最新评论
+                   renderGallery();
+                   // 自动展开评论区域
+                   setTimeout(() => {
+                       const el = document.getElementById(`comments-${workId}`);
+                       if (el) el.classList.add('show');
+                   }, 100);
                } else {
                    alert(data.msg || '评论失败');
                }
-           } catch (e) { alert('网络错误，评论失败'); }
+           } catch (e) {
+               alert('网络错误，评论失败');
+           }
        };
 
        window.openLightbox = function (id, img, title) {
