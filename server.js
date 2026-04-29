@@ -18,21 +18,19 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ====================== 上传目录配置 ======================
-// 把上传目录指向 Volume 挂载点
+// 生产环境使用 Railway Volume，开发环境用本地
 const uploadDir = process.env.NODE_ENV === 'production'
-    ? '/app/public/uploads'  // Railway Volume 挂载路径
+    ? '/app/public/uploads'  // Railway Volume 挂载点
     : path.join(__dirname, 'public', 'uploads');
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('📁 创建上传目录:', uploadDir);
 }
+
 
 // 确保静态文件服务指向正确路径
 app.use('/uploads', express.static(uploadDir));
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('📁 创建上传目录:', uploadDir);
-}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
@@ -690,6 +688,111 @@ app.get('/api/debug/works', (req, res) => {
         res.json({ count: rows.length, rows });
     });
 });
+
+// ========== 用户头像上传（新增） ==========
+app.post('/api/user/avatar', upload.single('avatar'), (req, res) => {
+    const { userId } = req.body;
+    if (!req.file) return res.status(400).json({ success: false, msg: '请选择图片' });
+
+    const avatarUrl = '/uploads/' + req.file.filename;
+
+    db.run(`UPDATE users SET avatar = ? WHERE id = ?`, [avatarUrl, userId], function (err) {
+        if (err) return res.status(500).json({ success: false, msg: err.message });
+        res.json({ success: true, url: avatarUrl });
+    });
+});
+
+// ========== 收到的评论（新增） ==========
+app.get('/api/comments/received', (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: '缺少userId' });
+
+    db.all(`
+        SELECT 
+            dyeRecords.id,
+            dyeRecords.comment AS content,
+            dyeRecords.createTime AS createdAt,
+            users.username AS fromUser,
+            dyeRecords.title AS workTitle
+        FROM dyeRecords 
+        LEFT JOIN users ON dyeRecords.userId = users.id
+        WHERE dyeRecords.userId = ? AND dyeRecords.comment IS NOT NULL AND dyeRecords.comment != ''
+        ORDER BY dyeRecords.createTime DESC
+    `, [userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+// ========== 收到的点赞（新增） ==========
+app.get('/api/likes/received', (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: '缺少userId' });
+
+    // 由于你没有单独的点赞记录表，这里返回空数组
+    // 如需实现，需要创建 likes 表记录谁点赞了谁
+    res.json([]);
+});
+
+// ========== 私信会话列表（新增） ==========
+app.get('/api/messages/conversations', (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: '缺少userId' });
+
+    db.all(`
+        SELECT 
+            CASE 
+                WHEN fromUser = ? THEN toUser 
+                ELSE fromUser 
+            END as withUser,
+            MAX(time) as lastTime,
+            content as lastMessage,
+            SUM(CASE WHEN read = 0 AND toUser = ? THEN 1 ELSE 0 END) as unread
+        FROM messages 
+        WHERE fromUser = ? OR toUser = ?
+        GROUP BY withUser
+        ORDER BY lastTime DESC
+    `, [userId, userId, userId, userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+// ========== 获取与某用户的私信（新增） ==========
+app.get('/api/messages/with/:user', (req, res) => {
+    const currentUser = req.query.userId;
+    const chatUser = req.params.user;
+    if (!currentUser) return res.status(400).json({ error: '缺少userId' });
+
+    db.all(`
+        SELECT 
+            fromUser as from,
+            content,
+            time as createdAt
+        FROM messages 
+        WHERE (fromUser = ? AND toUser = ?) OR (fromUser = ? AND toUser = ?)
+        ORDER BY time ASC
+    `, [currentUser, chatUser, chatUser, currentUser], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+// ========== 发送私信（新增） ==========
+app.post('/api/messages', (req, res) => {
+    const { from, to, content } = req.body;
+    if (!from || !to || !content) {
+        return res.status(400).json({ success: false, msg: '参数不完整' });
+    }
+
+    const time = new Date().toISOString();
+    db.run(`INSERT INTO messages (fromUser, toUser, content, time) VALUES (?, ?, ?, ?)`,
+        [from, to, content, time], function (err) {
+            if (err) return res.status(500).json({ success: false, msg: err.message });
+            res.json({ success: true, id: this.lastID });
+        });
+});
+
 // ====================== 启动 ======================
 const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
